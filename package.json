@@ -1,0 +1,27 @@
+{
+  "name": "time-buddy-cli",
+  "version": "0.1.0",
+  "description": "A command line tool for working with time concepts.",
+  "main": "cli.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "engines": {
+    "node": ">=8"
+  },
+  "keywords": [
+    "time"
+  ],
+  "author": "Matthew C. Walker",
+  "license": "MIT",
+  "bin": {
+    "tb": "bin/time-buddy.js"
+  },
+  "devDependencies": {
+    "eslint": "^5.12.1"
+  },
+  "dependencies": {
+    "minimist": "^1.2.0",
+    "moment": "^2.23.0"node
+  }
+}
