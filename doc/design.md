@@ -51,8 +51,9 @@ Time Buddy is a command line interface (CLI) tool for performing time operations
 
 ## Sample Use Cases
 
+> Statements in square brackets are optional or implied.
+
 - Difference between Time Points:
-  > Statements in square brackets are optional or implied.
 
   ```shell
     $ tb [calc] 10/10/2019 - [now]
@@ -120,8 +121,16 @@ Time Buddy is a command line interface (CLI) tool for performing time operations
 ### Expression Parsing
 
 - `Expressions` are parsed to determine operations to perform.
-- Use existing parser, e.g. [`nearly.js`](https://nearley.js.org/) (or other suitable choice TBD).
-- Grammar should support natural language concepts.
+  - Basic arithmetic.
+  - Date and time strings (ISO8601 and others).
+  - Key words and commands.
+- Use existing parser, e.g. 
+  - [`nearly.js`](https://nearley.js.org/)
+  - [GregRos/parjs](https://github.com/GregRos/parjs)
+  - (or other suitable choice TBD).
+- Grammar should support natural language concepts (but not true NLP, plskthx).
+- Supplemental date parsing potentially with [EDTF.js](https://github.com/inukshuk/edtf.js)
+- Keywords, constants, and commands are case-insensitive; units are case-sensitive.
 
 ### Date/Time Operations
 
@@ -155,3 +164,10 @@ Time Buddy is a command line interface (CLI) tool for performing time operations
   - Overrides global settings.
 - Create by hand or via `set` command:
   - Sets local if exists, otherwise user.
+
+## Resources
+
+- Example uses of `nearly.js` parser toolkit:
+  - [solvent](https://github.com/andrejewski/solvent) math calculator.
+  - [EDTF.js](https://github.com/inukshuk/edtf.js) Extended Date-Time Format parser.
+
