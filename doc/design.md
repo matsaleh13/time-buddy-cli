@@ -38,7 +38,7 @@ Time Buddy is a command line interface (CLI) tool for performing time operations
 - Output Format: The data structure used for representing Time Buddy output for display or persistence, e.g. JSON, raw text, or similar.
 - Statement: A keyword or other "unit of execution" that is interpreted by TimeBuddy to perform some operation.
 - Expression: A collection of statements and values that returns a result.
-- Operator: A type of `Statement` that requires one or more input arguments and produces a result. Examples:
+- Operator: A type of `Expression` that requires one or more input arguments and produces a result. Examples:
   - Arithmetic operators: `+` `-` `*` `/`
   - Relational Operators: `before` `after` `first` `last` `between` `from` `to` `until` `this` `next` `prev`
   - Conversion Operators: `as` `to`
@@ -131,10 +131,15 @@ Time Buddy is a command line interface (CLI) tool for performing time operations
 - Grammar should support natural language concepts (but not true NLP, plskthx).
 - Supplemental date parsing potentially with [EDTF.js](https://github.com/inukshuk/edtf.js)
 - Keywords, constants, and commands are case-insensitive; units are case-sensitive.
+- Candidate parsers to leverage:
+  - 
 
 ### Date/Time Operations
 
-- Use existing date/time package, e.g. [`moment`](https://momentjs.com/).
+- Use existing date/time package, e.g.:
+  - [`moment`](https://momentjs.com/)
+  - [date-fns](https://date-fns.org/docs/) NOTE: v2 breaking changes from v1; no duration support.
+
 
 ### Output
 
