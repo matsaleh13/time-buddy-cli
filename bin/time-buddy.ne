@@ -1,19 +1,30 @@
 tbOperation -> tbCommand tbExpression
              | tbExpression
 
-tbCommand -> "calc"  {% id %}
-           | "list"  {% id %}
-           | "count" {% id %}
-           | "set"   {% id %}
+# TODO: i18n
+tbCommand -> "calc"i  {% id %}
+           | "list"i  {% id %}
+           | "count"i {% id %}
+           | "set"i   {% id %}
 
 tbExpression -> tbValue tbBinaryOperator tbValue
               # | tbValue tbUnaryOperator
               # | tbUnaryOperator tbValue
 
+tbBinaryOperator -> tbAdd
+                  | tbSub
+                  | tbMul
+                  | tbDiv
+
+tbAdd -> "+" {% id %}
+tbSub -> "-" {% id %}
+tbMul -> "*" {% id %}
+tbDiv -> "/" {% id %}
+
 tbValue -> tbNumber
          | tbTimePoint
          | tbDuration
-         | tbVariable
+        #  | tbVariable
 
 # Time Point and Duration
 
@@ -52,18 +63,21 @@ tbMonth -> tbJan  {% id %}
          | "0":? [0-9]  {% ([d0, d1]) => d0 + d1 %}
          | "1" [0-9]    {% ([d0, d1]) => d0 + d1 %}
 
-tbJan -> "January"    | "Jan" | "01" | "1"  {% id %}
-tbFeb -> "February"   | "Feb" | "02" | "2"  {% id %}
-tbMar -> "March"      | "Mar" | "03" | "3"  {% id %}
-tbApr -> "April"      | "Apr" | "04" | "4"  {% id %}
-tbMay -> "May"        | "May" | "05" | "5"  {% id %}
-tbJun -> "June"       | "Jun" | "06" | "6"  {% id %}
-tbJul -> "July"       | "Jul" | "07" | "7"  {% id %}
-tbAug -> "August"     | "Aug" | "08" | "8"  {% id %}
-tbSep -> "September"  | "Sep" | "09" | "9"  {% id %}
-tbOct -> "October"    | "Oct" | "10" | "10" {% id %}
-tbNov -> "November"   | "Nov" | "11" | "11" {% id %}
-tbDec -> "December"   | "Dec" | "12" | "12" {% id %}
+tbDay -> tbDigit tbDigit:?
+
+# TODO: i18n
+tbJan -> "January"i    | "Jan"i | "01" | "1"  {% id %}
+tbFeb -> "February"i   | "Feb"i | "02" | "2"  {% id %}
+tbMar -> "March"i      | "Mar"i | "03" | "3"  {% id %}
+tbApr -> "April"i      | "Apr"i | "04" | "4"  {% id %}
+tbMay -> "May"i        | "May"i | "05" | "5"  {% id %}
+tbJun -> "June"i       | "Jun"i | "06" | "6"  {% id %}
+tbJul -> "July"i       | "Jul"i | "07" | "7"  {% id %}
+tbAug -> "August"i     | "Aug"i | "08" | "8"  {% id %}
+tbSep -> "September"i  | "Sep"i | "09" | "9"  {% id %}
+tbOct -> "October"i    | "Oct"i | "10" | "10" {% id %}
+tbNov -> "November"i   | "Nov"i | "11" | "11" {% id %}
+tbDec -> "December"i   | "Dec"i | "12" | "12" {% id %}
 
 tbDateSep -> "-" {% id %}
            | "." {% id %}
@@ -75,11 +89,32 @@ tbTimeUnit -> tbHours   {% id %}
             | tbMins    {% id %}
             | tbSecs    {% id %}
             | tbMillis  {% id %}
+            | tbMicros  {% id %}
+            | tbNanos   {% id %}
+
+# TODO: i18n
+tbHours -> "h"i       {% id %}
+         | "hr"i      {% id %}
+         | "hrs"i     {% id %}
+         | "hour"i    {% id %}
+         | "hours"i   {% id %}
+
+tbMins -> ("m"i | "min"i | "mins"i | "minute"i | "minutes"i) {% id %}
+tbSecs -> ("s"i | "sec"i | "secs"i | "second"i | "seconds"i) {% id %}
+tbMillis -> ("ms"i | "msec"i | "msecs"i | "millis"i | "millisecond"i | "milliseconds"i) {% id %}
+tbMicros -> ("us"i | "usec"i | "usecs"i | "micro"i | "micros"i | "microsec"i | "microsecs"i | "microsecond"i | "microseconds"i) {% id %}
+tbNanos -> ("ns"i | "nsec"i | "nsecs"i | "nano"i | "nanos"i | "nanosec"i | "nanosecs"i | "nanosecond"i | "nanoseconds"i) {% id %}
 
 tbDateUnit -> tbDays    {% id %}
             | tbWeeks   {% id %}
             | tbMonths  {% id %}
             | tbYears   {% id %}
+
+# TODO: i18n
+tbDays -> ("d"i | "dy"i | "dys"i | "day"i | "days"i)         {% id %}
+tbWeeks -> ("w"i | "wk"i | "wks"i | "week"i | "weeks"i)      {% id %}
+tbMonths -> ("m"i | "mon"i | "mons"i | "month"i | "months"i) {% id %}
+tbYears -> ("y"i | "yr"i | "yrs"i | "year"i | "years"i)      {% id %}
 
 # Numbers
 
