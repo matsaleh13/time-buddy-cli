@@ -29,6 +29,8 @@
   - I may bail on this though:
     - Maybe don't add a new thing to learn among the others here.
     - [The TypeScript Tax](https://medium.com/javascript-scene/the-typescript-tax-132ff4cb175b)
+- Experimenting with [Parsimmon](https://github.com/jneen/parsimmon):
+  - Added to project.
 
 ## 2019-04-19
 

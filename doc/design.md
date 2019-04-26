@@ -124,8 +124,9 @@ Time Buddy is a command line interface (CLI) tool for performing time operations
   - Basic arithmetic.
   - Date and time strings (ISO8601 and others).
   - Key words and commands.
-- Use existing parser, e.g. 
+- Use existing parser library, e.g.: 
   - [`nearly.js`](https://nearley.js.org/)
+  - [`jneen/parsimmon`](https://github.com/jneen/parsimmon)
   - [GregRos/parjs](https://github.com/GregRos/parjs)
   - (or other suitable choice TBD).
 - Grammar should support natural language concepts (but not true NLP, plskthx).
