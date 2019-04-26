@@ -1,5 +1,7 @@
-tbOperation -> tbCommand tbExpression
-             | tbExpression
+main -> tbCommand __ tbExpression _  {% ([d0, , d2]) => [d0, d2] %}
+      | tbExpression                 {% ([d0]) => d0 %}
+
+tbExpression -> _ tbAS _
 
 # TODO: i18n
 tbCommand -> "calc"i  {% id %}
@@ -7,24 +9,26 @@ tbCommand -> "calc"i  {% id %}
            | "count"i {% id %}
            | "set"i   {% id %}
 
-tbExpression -> tbValue tbBinaryOperator tbValue
-              # | tbValue tbUnaryOperator
-              # | tbUnaryOperator tbValue
+# PEMDAS!
+# We define each level of precedence as a nonterminal.
 
-tbBinaryOperator -> tbAdd
-                  | tbSub
-                  | tbMul
-                  | tbDiv
+# Parentheses
+tbP -> "(" _ tbAS _ ")" {% ([,,d2,,]) => d2 %}
+     | tbNumber         {% id %}
 
-tbAdd -> "+" {% id %}
-tbSub -> "-" {% id %}
-tbMul -> "*" {% id %}
-tbDiv -> "/" {% id %}
+# Exponents
+tbE -> tbP _ "^" _ tbE  {% ([d0,,,d4]) => Math.pow(d0, d4) %}
+     | tbP              {% id %}
 
-tbValue -> tbNumber
-         | tbTimePoint
-         | tbDuration
-        #  | tbVariable
+# Multiplication and division
+tbMD -> tbMD _ "*" _ tbE  {% ([d0,,,d4]) => d0*d4 %}
+      | tbMD _ "/" _ tbE  {% ([d0,,,d4]) => d0/d4 %}
+      | tbE               {% id %}
+
+# Addition and subtraction
+tbAS -> tbAS _ "+" _ tbMD {% ([d0,,,d4]) => d0+d4 %}
+      | tbAS _ "-" _ tbMD {% ([d0,,,d4]) => d0-d4 %}
+      | tbMD              {% id %}
 
 # Time Point and Duration
 
@@ -45,8 +49,8 @@ tbDate -> tbYear tbDateSep:? tbMonth tbDateSep:? tbDay
         # | tbMonth
         # | tbDay
 
-tbYear -> tbDigit tbDigit tbDigit tbDigit {% (d) => d.join('') %}
-        | tbDigit tbDigit                 {% (d) => d.join('') %}
+tbYear -> tbDigit tbDigit tbDigit tbDigit {% ([d0]) => d.join('') %}
+        | tbDigit tbDigit                 {% ([d0]) => d.join('') %}
 
 tbMonth -> tbJan  {% id %}
          | tbFeb  {% id %}
@@ -117,15 +121,16 @@ tbMonths -> ("m"i | "mon"i | "mons"i | "month"i | "months"i) {% id %}
 tbYears -> ("y"i | "yr"i | "yrs"i | "year"i | "years"i)      {% id %}
 
 # Numbers
+tbNumber -> tbInt       {% ([d0]) => parseInt(d0, 10) %}
+          | tbDecimal   {% ([d0]) => parseFloat(d0) %}
+          | tbTimePoint {% id %}
+          | tbDuration  {% id %}
 
-tbNumber -> tbInt      {% (d) => parseInt(d[0], 10) %}
-          | tbDecimal  {% (d) => parseFloat(d[0]) %}
-
-tbDecimal -> tbInt "." tbInt  {% (d0, _, d1) => d0 + _ + d1 %}
-tbInt -> tbDigit:+  {% (d) => d[0].join('') %}
+tbDecimal -> tbInt "." tbInt  {% (d0, d1, d2) => d0 + d1 + d2 %}
+tbInt -> tbDigit:+  {% ([d0]) => d0.join('') %}
 
 tbDigit -> [0-9] {% id %}
 
 # Whitespace. Postprocrssor is null-returning function for memory efficiency.
-__ -> [\s]:+	{% nuller %}   # Mandatory whitespace.
-_ -> [\s]:*   {% nuller %}	# Optional whitespace.
+__ -> [\s]:+	{% () => null %}   # Mandatory whitespace.
+_ -> [\s]:*   {% () => null %}	# Optional whitespace.

@@ -73,3 +73,11 @@
 ## 2019-04-22
 
 - Started hacking together my own grammar using the [Nearley Playground](https://omrelli.ug/nearley-playground/).
+
+## 2019-04-25
+
+- More hacking on tb-grammar.ne.
+- Trying to get some meaningful output. 
+  - The playground doesn't give any feedback.
+  - The nearley-unparse does nothing.
+  - The nearley-test returns nothing also.
