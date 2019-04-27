@@ -94,3 +94,11 @@
     => 12
     ```
 
+  - Tried adding in some date stuff, like year.
+    - Currently defined in terms of `tbDigit`, which is an ancestor of `tbNumber`.
+    - That made it hard to distinguish between a year and a division operation:
+
+      ```text
+      1984/05/21
+      => 18.895238095238096 # not what I want.
+      ```

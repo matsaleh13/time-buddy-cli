@@ -32,7 +32,7 @@ tbAS -> tbAS _ "+" _ tbMD {% (d) => d[0]+d[4] %}
 
 # Time Point and Duration
 
-# tbTimePoint -> tbDate
+tbTimePoint -> tbDate
 #             #  | tbTime
 #             #  | tbDate tbTime
 #             #  | tbTime tbDate
@@ -42,17 +42,17 @@ tbAS -> tbAS _ "+" _ tbMD {% (d) => d[0]+d[4] %}
 
 # Dates
 
-# tbDate -> tbYear tbDateSep:? tbMonth tbDateSep:? tbDay
+tbDate -> tbYear tbDateSep:? tbMonth tbDateSep:? tbDay
 #         # | tbMonth tbDateSep:? tbDay tbDateSep:? tbYear
 #         # | tbDay tbDateSep:? tbMonth tbDateSep:? tbYear
 #         # | tbYear
 #         # | tbMonth
 #         # | tbDay
 
-# tbYear -> tbDigit tbDigit tbDigit tbDigit {% (d) => d.join('') %}
-#         | tbDigit tbDigit                 {% (d) => d.join('') %}
+tbYear -> [0-9] [0-9] [0-9] [0-9] {% (d) => d.join('') %}
+        | [0-9] [0-9]             {% (d) => d.join('') %}
 
-# tbMonth -> tbJan  {% id %}
+tbMonth -> tbJan  {% id %}
 #          | tbFeb  {% id %}
 #          | tbMar  {% id %}
 #          | tbApr  {% id %}
@@ -67,10 +67,10 @@ tbAS -> tbAS _ "+" _ tbMD {% (d) => d[0]+d[4] %}
 #          | "0":? [0-9]  {% (d) => d[0] + d[1] %}
 #          | "1" [0-9]    {% (d) => d[0] + d[1] %}
 
-# tbDay -> tbDigit tbDigit:?
+tbDay -> tbDigit tbDigit:?
 
 # TODO: i18n
-# tbJan -> "January"i    | "Jan"i | "01" | "1"  {% id %}
+tbJan -> "January"i    | "Jan"i | "01" | "1"  {% id %}
 # tbFeb -> "February"i   | "Feb"i | "02" | "2"  {% id %}
 # tbMar -> "March"i      | "Mar"i | "03" | "3"  {% id %}
 # tbApr -> "April"i      | "Apr"i | "04" | "4"  {% id %}
@@ -83,9 +83,9 @@ tbAS -> tbAS _ "+" _ tbMD {% (d) => d[0]+d[4] %}
 # tbNov -> "November"i   | "Nov"i | "11" | "11" {% id %}
 # tbDec -> "December"i   | "Dec"i | "12" | "12" {% id %}
 
-# tbDateSep -> "-" {% id %}
-#            | "." {% id %}
-#            | "/" {% id %}
+tbDateSep -> "-" {% id %}
+           | "." {% id %}
+           | "/" {% id %}
 
 # Units
 
