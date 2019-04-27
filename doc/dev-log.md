@@ -174,3 +174,10 @@
     3 days
     => 259200000 # millisß
     ```
+
+  - Still got issues parsing dates, lah!
+    - `2019/05/14` parses to a date (and other things).
+    - `05/14/2019` parses to a division expression (still/again).
+  - Worked around them for now by requiring spaces around arithmetic operators. 
+    - Not sure I like that much, but it's a tradeoff between that and quotes around date strings, which I also don't like.
+    - TODO: revisit this once other issues worked out.

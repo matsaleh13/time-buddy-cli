@@ -17,17 +17,17 @@ tbP -> "(" _ tbAS _ ")" {% (d) => d[2] %}
      | tbNumber         {% id %}
 
 # Exponents
-tbE -> tbP _ "^" _ tbE  {% (d) => Math.pow(d[0], d[4]) %}
+tbE -> tbP __ "^" __ tbE  {% (d) => Math.pow(d[0], d[4]) %}
      | tbP              {% id %}
 
 # Multiplication and division
-tbMD -> tbMD _ "*" _ tbE  {% (d) => d[0]*d[4] %}
-      | tbMD _ "/" _ tbE  {% (d) => d[0]/d[4] %}
+tbMD -> tbMD __ "*" __ tbE  {% (d) => d[0]*d[4] %}
+      | tbMD __ "/" __ tbE  {% (d) => d[0]/d[4] %}
       | tbE               {% id %}
 
 # Addition and subtraction
-tbAS -> tbAS _ "+" _ tbMD {% (d) => d[0]+d[4] %}
-      | tbAS _ "-" _ tbMD {% (d) => d[0]-d[4] %}
+tbAS -> tbAS __ "+" __ tbMD {% (d) => d[0]+d[4] %}
+      | tbAS __ "-" __ tbMD {% (d) => d[0]-d[4] %}
       | tbMD              {% id %}
 
 # Time Point and Duration
@@ -43,46 +43,47 @@ tbDuration -> tbNumber _ tbTimeUnit      {% (d) => d[0] * d[2] %}
 # Dates
 
 tbDate -> tbYear tbDateSep tbMonth tbDateSep tbDay	{% (d) => d.join('') %}
-#       | tbMonth tbDateSep:? tbDay tbDateSep:? tbYear
-#       | tbDay tbDateSep:? tbMonth tbDateSep:? tbYear
-#       | tbYear
-#       | tbMonth
-#       | tbDay
+        | tbMonth tbDateSep tbDay tbDateSep tbYear  {% (d) => d.join('') %}
+        | tbDay tbDateSep tbMonth tbDateSep tbYear  {% (d) => d.join('') %}
+        | tbYear   {% id %}
+        # | tbMonth  {% id %}
+        # | tbDay    {% id %}
 
 tbYear -> tbDigit tbDigit tbDigit tbDigit {% (d) => d.join('') %}
         | tbDigit tbDigit                 {% (d) => d.join('') %}
 
 
 tbMonth -> tbJan  {% id %}
-#          | tbFeb  {% id %}
-#          | tbMar  {% id %}
-#          | tbApr  {% id %}
-#          | tbMay  {% id %}
-#          | tbJun  {% id %}
-#          | tbJul  {% id %}
-#          | tbAug  {% id %}
-#          | tbSep  {% id %}
-#          | tbOct  {% id %}
-#          | tbNov  {% id %}
-#          | tbDec  {% id %}
-          | "0":? [0-9]  {% (d) => d[0] + d[1] %}
-          | "1" [0-9]    {% (d) => d[0] + d[1] %}
+         | tbFeb  {% id %}
+         | tbMar  {% id %}
+         | tbApr  {% id %}
+         | tbMay  {% id %}
+         | tbJun  {% id %}
+         | tbJul  {% id %}
+         | tbAug  {% id %}
+         | tbSep  {% id %}
+         | tbOct  {% id %}
+         | tbNov  {% id %}
+         | tbDec  {% id %}
+         | "0" tbDigit {% (d) => d.join('') %}
+         | "1" tbDigit {% (d) => d.join('') %}
+		 | tbDigit     {% id %}
 
-tbDay -> [0-3]:? [0-9]   {% (d) => d[0] + d[1] %}
+tbDay -> [0-3]:? tbDigit   {% (d) => d[0] + d[1] %}
 
 # TODO: i18n
 tbJan -> "January"i    | "Jan"i | "01" | "1"  {% id %}
-# tbFeb -> "February"i   | "Feb"i | "02" | "2"  {% id %}
-# tbMar -> "March"i      | "Mar"i | "03" | "3"  {% id %}
-# tbApr -> "April"i      | "Apr"i | "04" | "4"  {% id %}
-# tbMay -> "May"i        | "May"i | "05" | "5"  {% id %}
-# tbJun -> "June"i       | "Jun"i | "06" | "6"  {% id %}
-# tbJul -> "July"i       | "Jul"i | "07" | "7"  {% id %}
-# tbAug -> "August"i     | "Aug"i | "08" | "8"  {% id %}
-# tbSep -> "September"i  | "Sep"i | "09" | "9"  {% id %}
-# tbOct -> "October"i    | "Oct"i | "10" | "10" {% id %}
-# tbNov -> "November"i   | "Nov"i | "11" | "11" {% id %}
-# tbDec -> "December"i   | "Dec"i | "12" | "12" {% id %}
+tbFeb -> "February"i   | "Feb"i | "02" | "2"  {% id %}
+tbMar -> "March"i      | "Mar"i | "03" | "3"  {% id %}
+tbApr -> "April"i      | "Apr"i | "04" | "4"  {% id %}
+tbMay -> "May"i        | "May"i | "05" | "5"  {% id %}
+tbJun -> "June"i       | "Jun"i | "06" | "6"  {% id %}
+tbJul -> "July"i       | "Jul"i | "07" | "7"  {% id %}
+tbAug -> "August"i     | "Aug"i | "08" | "8"  {% id %}
+tbSep -> "September"i  | "Sep"i | "09" | "9"  {% id %}
+tbOct -> "October"i    | "Oct"i | "10" | "10" {% id %}
+tbNov -> "November"i   | "Nov"i | "11" | "11" {% id %}
+tbDec -> "December"i   | "Dec"i | "12" | "12" {% id %}
 
 tbDateSep -> [-/.] {% id %}
 
@@ -106,7 +107,7 @@ tbDateSep -> [-/.] {% id %}
 tbTimeUnit -> tbMillis  {% () => MS %}
             | tbSecs    {% () => MS_PER_SEC %}
             | tbMins    {% () => MS_PER_MIN %}
-   		      | tbHours   {% () => MS_PER_HR %}
+            | tbHours   {% () => MS_PER_HR %}
             | tbDays    {% () => MS_PER_DAY %}
             | tbWeeks   {% () => MS_PER_WEEK %}
             | tbMonths  {% () => MS_PER_MONTH %}
@@ -128,15 +129,14 @@ tbMicros -> ("us"i | "usec"i | "usecs"i | "micro"i | "micros"i)      {% id %}
 tbNanos  -> ("ns"i | "nsec"i | "nsecs"i | "nano"i | "nanos"i )       {% id %}
 
 # Numbers
-tbNumber -> tbInt       {% (d) => parseInt(d[0], 10) %}
-          | tbDecimal   {% (d) => parseFloat(d[0]) %}
-          | tbTimePoint {% (d) => new Date(d[0]) %}
-          | tbDuration  {% id %}
+tbNumber -> tbInt             {% (d) => parseInt(d[0], 10) %}
+          | tbDecimal         {% (d) => parseFloat(d[0]) %}
+          | tbTimePoint       {% (d) => new Date(d[0]) %}
+          | tbDuration        {% id %}
 
 tbDecimal -> tbInt "." tbInt  {% (d) => d[0] + d[1] + d[2] %}
-tbInt -> tbDigit:+  {% (d) => d[0].join('') %}
-
-tbDigit -> [0-9] {% id %}
+tbInt     -> tbDigit:+        {% (d) => d[0].join('') %}
+tbDigit   -> [0-9]            {% id %}
 
 # Whitespace. Postprocrssor is null-returning function for memory efficiency.
 __ -> [\s]:+	{% () => null %}   # Mandatory whitespace.
