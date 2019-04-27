@@ -102,3 +102,75 @@
       1984/05/21
       => 18.895238095238096 # not what I want.
       ```
+
+## 2019-04-27
+
+- WIP on the grammar:
+  - Found that my inability to distinguish between date separator and division operator was due in part to simply omitting the `tbTimePoint` production:
+
+    ```text
+    tbNumber -> tbInt       {% (d) => parseInt(d[0], 10) %}
+              | tbDecimal   {% (d) => parseFloat(d[0]) %}
+              | tbTimePoint {% id %}  # this was missing
+    ```
+
+  - This gave me:
+
+    ```text
+    1984/03/14
+    =>
+    "1984-03-14T06:00:00.000Z"
+    47.23809523809524
+    ```
+
+  - Note the multiple results! That's because this is an ambiguous grammar, which means that we can't tell which way to interpret the date string. 
+    - In this case, ambiguity is probably okay, because it's tightly bounded (i.e. no recursion or optional/variable lengths).
+    - Plus, one of the benefits of `nearley.js` is that it gives all possible results of an ambiguous grammar in a deterministic order.
+    - That means we can probably write code to pick the one we want based on the context. For example, if we get an ambiguous result that has a `Date` as its first value, that's probably always what we want.
+
+  - Alternately, I also got it to work by enclosing the date string in quotes, but I'd really like to avoid requiring that of the user if possible.  
+  - Also, I'm finding the ability to interactively experiment in the playground page to be essential to both learning and building the grammar.
+
+  - Now building up the units.
+    - Time units are used for durations, e.g. hours, minutes, etc.
+    - All expressed in terms of milliseconds, since that's the precision of the native Javascript epoch time.
+    - Some things will be a problem, e.g. millis per year (leap years), or per month (e.g. different lengths). TBD on some of that.
+    - Wrote some JS code declaring a set of constants for the units:
+
+      ```javascript
+      const MS            = 1;
+      const MS_PER_SEC    = MS * 1000;
+      const MS_PER_MIN    = MS_PER_SEC * 60;
+      const MS_PER_HR     = MS_PER_MIN * 60;
+      const MS_PER_DAY    = MS_PER_HR * 24;
+      const MS_PER_WEEK   = MS_PER_DAY * 7;
+      const MS_PER_MONTH  = MS_PER_DAY * 30.4167; // on average, per Google
+      const MS_PER_YEAR   = MS_PER_DAY * 365; // not counting leap year
+      const MS_PER_MICRO  = MS / 1000;
+      const MS_PER_NANO   = MS_PER_MICRO / 1000;
+      ```
+
+    - Followed by the grammar for each unit, with a postprocessor for each unit that returns the corresponding constant:
+
+    ```bnf
+    tbTimeUnit -> tbMillis  {% () => MS %}
+                | tbSecs    {% () => MS_PER_SEC %}
+                | tbMins    {% () => MS_PER_MIN %}
+                | tbHours   {% () => MS_PER_HR %}
+                | tbDays    {% () => MS_PER_DAY %}
+                | tbWeeks   {% () => MS_PER_WEEK %}
+                | tbMonths  {% () => MS_PER_MONTH %}
+                | tbYears   {% () => MS_PER_YEAR %}
+                | tbMicros  {% () => MS_PER_MICRO %}
+                | tbNanos   {% () => MS_PER_NANO %}
+    ```
+
+    - This works pretty well:
+
+    ```text
+    1h
+    => 3600000 # millis
+
+    3 days
+    => 259200000 # millisß
+    ```

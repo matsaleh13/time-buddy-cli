@@ -37,20 +37,21 @@ tbTimePoint -> tbDate
 #             #  | tbDate tbTime
 #             #  | tbTime tbDate
 
-# tbDuration -> tbNumber tbTimeUnit:?
+tbDuration -> tbNumber _ tbTimeUnit      {% (d) => d[0] * d[2] %}
 
 
 # Dates
 
-tbDate -> tbYear tbDateSep:? tbMonth tbDateSep:? tbDay
-#         # | tbMonth tbDateSep:? tbDay tbDateSep:? tbYear
-#         # | tbDay tbDateSep:? tbMonth tbDateSep:? tbYear
-#         # | tbYear
-#         # | tbMonth
-#         # | tbDay
+tbDate -> tbYear tbDateSep tbMonth tbDateSep tbDay	{% (d) => d.join('') %}
+#       | tbMonth tbDateSep:? tbDay tbDateSep:? tbYear
+#       | tbDay tbDateSep:? tbMonth tbDateSep:? tbYear
+#       | tbYear
+#       | tbMonth
+#       | tbDay
 
-tbYear -> [0-9] [0-9] [0-9] [0-9] {% (d) => d.join('') %}
-        | [0-9] [0-9]             {% (d) => d.join('') %}
+tbYear -> tbDigit tbDigit tbDigit tbDigit {% (d) => d.join('') %}
+        | tbDigit tbDigit                 {% (d) => d.join('') %}
+
 
 tbMonth -> tbJan  {% id %}
 #          | tbFeb  {% id %}
@@ -64,10 +65,10 @@ tbMonth -> tbJan  {% id %}
 #          | tbOct  {% id %}
 #          | tbNov  {% id %}
 #          | tbDec  {% id %}
-#          | "0":? [0-9]  {% (d) => d[0] + d[1] %}
-#          | "1" [0-9]    {% (d) => d[0] + d[1] %}
+          | "0":? [0-9]  {% (d) => d[0] + d[1] %}
+          | "1" [0-9]    {% (d) => d[0] + d[1] %}
 
-tbDay -> tbDigit tbDigit:?
+tbDay -> [0-3]:? [0-9]   {% (d) => d[0] + d[1] %}
 
 # TODO: i18n
 tbJan -> "January"i    | "Jan"i | "01" | "1"  {% id %}
@@ -83,48 +84,54 @@ tbJan -> "January"i    | "Jan"i | "01" | "1"  {% id %}
 # tbNov -> "November"i   | "Nov"i | "11" | "11" {% id %}
 # tbDec -> "December"i   | "Dec"i | "12" | "12" {% id %}
 
-tbDateSep -> "-" {% id %}
-           | "." {% id %}
-           | "/" {% id %}
+tbDateSep -> [-/.] {% id %}
+
 
 # Units
 
-# tbTimeUnit -> tbHours   {% id %}
-#             | tbMins    {% id %}
-#             | tbSecs    {% id %}
-#             | tbMillis  {% id %}
-#             | tbMicros  {% id %}
-#             | tbNanos   {% id %}
+# Units constants in terms of milliseconds (because JS native epoch time is ms)
+@{%
+  const MS            = 1;
+  const MS_PER_SEC    = MS * 1000;
+  const MS_PER_MIN    = MS_PER_SEC * 60;
+  const MS_PER_HR     = MS_PER_MIN * 60;
+  const MS_PER_DAY    = MS_PER_HR * 24;
+  const MS_PER_WEEK   = MS_PER_DAY * 7;
+  const MS_PER_MONTH  = MS_PER_DAY * 30.4167; // on average, per Google
+  const MS_PER_YEAR   = MS_PER_DAY * 365; // not counting leap year
+  const MS_PER_MICRO  = MS / 1000;
+  const MS_PER_NANO   = MS_PER_MICRO / 1000;
+%}
+
+tbTimeUnit -> tbMillis  {% () => MS %}
+            | tbSecs    {% () => MS_PER_SEC %}
+            | tbMins    {% () => MS_PER_MIN %}
+   		      | tbHours   {% () => MS_PER_HR %}
+            | tbDays    {% () => MS_PER_DAY %}
+            | tbWeeks   {% () => MS_PER_WEEK %}
+            | tbMonths  {% () => MS_PER_MONTH %}
+            | tbYears   {% () => MS_PER_YEAR %}
+            | tbMicros  {% () => MS_PER_MICRO %}
+            | tbNanos   {% () => MS_PER_NANO %}
+
 
 # TODO: i18n
-# tbHours -> "h"i       {% id %}
-#          | "hr"i      {% id %}
-#          | "hrs"i     {% id %}
-#          | "hour"i    {% id %}
-#          | "hours"i   {% id %}
-
-# tbMins -> ("m"i | "min"i | "mins"i | "minute"i | "minutes"i) {% id %}
-# tbSecs -> ("s"i | "sec"i | "secs"i | "second"i | "seconds"i) {% id %}
-# tbMillis -> ("ms"i | "msec"i | "msecs"i | "millis"i | "millisecond"i | "milliseconds"i) {% id %}
-# tbMicros -> ("us"i | "usec"i | "usecs"i | "micro"i | "micros"i | "microsec"i | "microsecs"i | "microsecond"i | "microseconds"i) {% id %}
-# tbNanos -> ("ns"i | "nsec"i | "nsecs"i | "nano"i | "nanos"i | "nanosec"i | "nanosecs"i | "nanosecond"i | "nanoseconds"i) {% id %}
-
-# tbDateUnit -> tbDays    {% id %}
-#             | tbWeeks   {% id %}
-#             | tbMonths  {% id %}
-#             | tbYears   {% id %}
-
-# TODO: i18n
-# tbDays -> ("d"i | "dy"i | "dys"i | "day"i | "days"i)         {% id %}
-# tbWeeks -> ("w"i | "wk"i | "wks"i | "week"i | "weeks"i)      {% id %}
-# tbMonths -> ("m"i | "mon"i | "mons"i | "month"i | "months"i) {% id %}
-# tbYears -> ("y"i | "yr"i | "yrs"i | "year"i | "years"i)      {% id %}
+tbMillis -> ("ms"i | "msec"i | "msecs"i | "millis"i | "millisecs"i)  {% id %}
+tbSecs   -> ("s"i | "sec"i | "secs"i | "second"i | "seconds"i)       {% id %}
+tbMins   -> ("m"i | "min"i | "mins"i | "minute"i | "minutes"i)       {% id %}
+tbHours  -> ("h"i | "hr"i | "hrs"i | "hour"i | "hours"i)             {% id %}
+tbDays   -> ("d"i | "dy"i | "dys"i | "day"i | "days"i)               {% id %}
+tbWeeks  -> ("w"i | "wk"i | "wks"i | "week"i | "weeks"i)             {% id %}
+tbMonths -> ("mn"i | "mon"i | "mons"i | "month"i | "months"i)        {% id %}
+tbYears  -> ("y"i | "yr"i | "yrs"i | "year"i | "years"i)             {% id %}
+tbMicros -> ("us"i | "usec"i | "usecs"i | "micro"i | "micros"i)      {% id %}
+tbNanos  -> ("ns"i | "nsec"i | "nsecs"i | "nano"i | "nanos"i )       {% id %}
 
 # Numbers
 tbNumber -> tbInt       {% (d) => parseInt(d[0], 10) %}
           | tbDecimal   {% (d) => parseFloat(d[0]) %}
-          # | tbTimePoint {% id %}
-          # | tbDuration  {% id %}
+          | tbTimePoint {% (d) => new Date(d[0]) %}
+          | tbDuration  {% id %}
 
 tbDecimal -> tbInt "." tbInt  {% (d) => d[0] + d[1] + d[2] %}
 tbInt -> tbDigit:+  {% (d) => d[0].join('') %}
