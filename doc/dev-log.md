@@ -81,3 +81,16 @@
   - The playground doesn't give any feedback.
   - The nearley-unparse does nothing.
   - The nearley-test returns nothing also.
+
+## 2019-04-26
+
+- Iterating on the grammar:
+  - Commented out much of the extra stuff, and focused on getting PEMDAS to work.
+  - Again, iterated using the playground site.
+  - Got it working to the point where basic arithmetic and parens are working, w00t:
+
+    ```text
+    (1 + 3) * 3
+    => 12
+    ```
+
