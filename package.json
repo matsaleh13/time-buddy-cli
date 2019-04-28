@@ -22,7 +22,7 @@
   },
   "dependencies": {
     "minimist": "^1.2.0",
-    "moment": "^2.23.0",
+    "moment": "^2.24.0",
     "parsimmon": "^1.12.0"
   }
 }

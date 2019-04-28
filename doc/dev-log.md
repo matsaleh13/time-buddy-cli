@@ -181,3 +181,19 @@
   - Worked around them for now by requiring spaces around arithmetic operators. 
     - Not sure I like that much, but it's a tradeoff between that and quotes around date strings, which I also don't like.
     - TODO: revisit this once other issues worked out.
+
+## 2019-04-28
+
+- WIP on grammar still:
+  - Now iterating on the `TimePoint` concepts. This is the hardest yet, though:
+    - Can't just parse the string, as I could with a date.
+    - Really need an array of values, matching the arguments of the JS `Date` class.
+    - For cases where I have only the time components, I'll need to infer "today" for the date. Conceptually not hard, but fitting this into the postprocessor code blocks will start looking messy.
+    - I think I'll need some utility functions, e.g.:
+
+    ```Javascript
+    hToDate(hour: string) => Date
+    hmToDate(hour: string, minute: string) => Date
+    hmsToDate(hour: string, minute: string, second: string) => Date
+    hmssToDate(hour: string, minute: string, second: string, milli: string) => Date
+    ```

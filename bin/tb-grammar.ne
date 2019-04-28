@@ -14,7 +14,9 @@ tbCommand -> "calc"i  {% id %}
 
 # Parentheses
 tbP -> "(" _ tbAS _ ")" {% (d) => d[2] %}
-     | tbNumber         {% id %}
+     | tbValue          {% id %}
+#	 | tbTimePoint       {% id %}
+#	 | tbDuration        {% id %}
 
 # Exponents
 tbE -> tbP __ "^" __ tbE  {% (d) => Math.pow(d[0], d[4]) %}
@@ -30,14 +32,58 @@ tbAS -> tbAS __ "+" __ tbMD {% (d) => d[0]+d[4] %}
       | tbAS __ "-" __ tbMD {% (d) => d[0]-d[4] %}
       | tbMD              {% id %}
 
-# Time Point and Duration
+# Values
+tbValue -> tbNumber			 {% (d) => d[0] %}
+         | tbTimePoint       {% id %}
+         | tbDuration        {% id %}
 
-tbTimePoint -> tbDate
-#             #  | tbTime
+
+# Time Point and Duration
+@{%
+  function join(array) { return array.join(''); }
+  function toInt(strVal) { return parseInt(strVal, 10); }
+  function date2Array(date) {
+    const _date = date ? new Date(); // now
+    return [
+      _date.getFullYear(),
+      _date.getMonth(),
+      _date.getDate(),
+      _date.getHours(),
+      _date.getMinutes(),
+      _date.getSeconds(),
+      _date.getMilliseconds(),
+    ]
+  }
+  function h2Date(hour) {
+    const [year,month,date] = date2Array();
+    return new Date(year,month,date,toInt(hour));
+  }
+  function hm2Date(hour, minute) {
+    const [year,month,date] = date2Array();
+    return new Date(year,month,date,toInt(hour),toInt(minute));
+  }
+  function hms2Date(hour, minute, second) {
+    const [year,month,date] = date2Array();
+    return new Date(year,month,date,toInt(hour),toInt(minute),toInt(second));
+  }
+  function hmss2Date(hour, minute, second, millisec) {
+    const [year,month,date] = date2Array();
+    return new Date(year,month,date,toInt(hour),toInt(minute),toInt(second),toInt(millisec));
+  }
+
+%}
+
+tbTimePoint -> tbDate    {% (d) => new Date(d[0]) %}
+             | tbTime    {% (d) => new Date(d[0]) %}
 #             #  | tbDate tbTime
 #             #  | tbTime tbDate
 
+
 tbDuration -> tbNumber _ tbTimeUnit      {% (d) => d[0] * d[2] %}
+
+# ISO 8601
+
+#tbTimePoint8601 -> tbDate8601 "T" tbTime8601 tbOffset8601 {% id %}
 
 
 # Dates
@@ -45,9 +91,13 @@ tbDuration -> tbNumber _ tbTimeUnit      {% (d) => d[0] * d[2] %}
 tbDate -> tbYear tbDateSep tbMonth tbDateSep tbDay	{% (d) => d.join('') %}
         | tbMonth tbDateSep tbDay tbDateSep tbYear  {% (d) => d.join('') %}
         | tbDay tbDateSep tbMonth tbDateSep tbYear  {% (d) => d.join('') %}
-        | tbYear   {% id %}
+        | tbMonth _ tbDay ",":? _ tbYear  			{% (d) => d.join('') %}
+        | tbDay _ tbMonth ",":? _ tbYear  			{% (d) => d.join('') %}
+        # | tbYear   {% id %}
         # | tbMonth  {% id %}
         # | tbDay    {% id %}
+
+#tbDate8601 -> tbYear "-" tbMonth "-" tbDay      {% (d) => d.join('') %}
 
 tbYear -> tbDigit tbDigit tbDigit tbDigit {% (d) => d.join('') %}
         | tbDigit tbDigit                 {% (d) => d.join('') %}
@@ -87,6 +137,37 @@ tbDec -> "December"i   | "Dec"i | "12" | "12" {% id %}
 
 tbDateSep -> [-/.] {% id %}
 
+# Time
+
+tbTime -> tbH24					        {% (d) => h2Date(d...) %}
+        | tbH12 _ tbAMPM:?      {% id %}
+        | tbHM24                {% (d) => hm2Date(d...) %}
+        | tbHM12 _ tbAMPM:?     {% id %}
+        | tbHMS24               {% (d) => hms2Date(d...) %}
+        | tbHMS12 _ tbAMPM:?    {% id %}
+        | tbHMSs24              {% (d) => hnss2Date(d...) %}
+        | tbHMSs12 _ tbAMPM:?   {% id %}
+#        | tbTime8601            {% id %}
+
+#tbTime8601 ->  tbSecsFraction:?   {% (d) => d.join('') %}
+
+tbH24 -> [0-2]:? tbDigit 							{% (d) => [join(d)] %}
+tbH12 -> [0-1]:? tbDigit 							{% (d) => [join(d)]  %}
+tbHM24 -> tbH24 tbTimeSep [0-5] tbDigit 	{% (d) => d[0].push(d[2], d[3]) %}
+tbHM12 -> tbH12 tbTimeSep [0-5] tbDigit 	{% (d) => d[0].push(d[2], d[3]) %}
+tbHMS24 -> tbHM24 tbTimeSep [0-5] tbDigit {% (d) => d[0].push(d[2], d[3]) %}
+tbHMS12 -> tbHM12 tbTimeSep [0-5] tbDigit {% (d) => d[0].push(d[2], d[3]) %}
+tbHMSs24 -> tbHMS24 tbSecsFraction {% (d) => d[0].push(d[1]) %}
+tbHMSs12 -> tbHMS12 tbSecsFraction {% (d) => d[0].push(d[1]) %}
+
+#tbHours -> [0-2]:? tbDigit                             {% (d) => d.join('') %}
+#tbMins -> [0-5]:? tbDigit                              {% (d) => d.join('') %}
+#tbSecs -> [0-5]:? tbDigit tbSecsFraction:?             {% (d) => d.join('') %}
+tbSecsFraction -> "." tbDigit tbDigit tbDigit:?   		  {% (d) => d[1] + d[2] + d[3] %}
+tbAMPM -> ("am" | "AM" | "pm" | "PM")  {% id %}
+
+
+tbTimeSep -> [:] {% id %}
 
 # Units
 
@@ -131,8 +212,6 @@ tbNanos  -> ("ns"i | "nsec"i | "nsecs"i | "nano"i | "nanos"i )       {% id %}
 # Numbers
 tbNumber -> tbInt             {% (d) => parseInt(d[0], 10) %}
           | tbDecimal         {% (d) => parseFloat(d[0]) %}
-          | tbTimePoint       {% (d) => new Date(d[0]) %}
-          | tbDuration        {% id %}
 
 tbDecimal -> tbInt "." tbInt  {% (d) => d[0] + d[1] + d[2] %}
 tbInt     -> tbDigit:+        {% (d) => d[0].join('') %}
