@@ -197,3 +197,7 @@
     hmsToDate(hour: string, minute: string, second: string) => Date
     hmssToDate(hour: string, minute: string, second: string, milli: string) => Date
     ```
+
+    - The utility functions are helping.
+    - Still finding it a challenge to find the right place to do an 'expansion' of a pattern into components. It seems that the more I 'modularize' the grammar (i.e. assemble higher level nonterminals from lower-level components), the more likely I am to get an ambiguous grammar. It's almost as though I should make a bunch of highly specific productions, potentially with duplicated nonterminals and terminals, in order to get more precise/less ambiguous results.
+    - Still feeling my way I guess. This is very much an organic process I think.

@@ -43,7 +43,7 @@ tbValue -> tbNumber			 {% (d) => d[0] %}
   function join(array) { return array.join(''); }
   function toInt(strVal) { return parseInt(strVal, 10); }
   function date2Array(date) {
-    const _date = date ? new Date(); // now
+    const _date = date || new Date(); // now
     return [
       _date.getFullYear(),
       _date.getMonth(),
@@ -74,7 +74,7 @@ tbValue -> tbNumber			 {% (d) => d[0] %}
 %}
 
 tbTimePoint -> tbDate    {% (d) => new Date(d[0]) %}
-             | tbTime    {% (d) => new Date(d[0]) %}
+             | tbTime    {% id %}
 #             #  | tbDate tbTime
 #             #  | tbTime tbDate
 
@@ -139,30 +139,29 @@ tbDateSep -> [-/.] {% id %}
 
 # Time
 
-tbTime -> tbH24					        {% (d) => h2Date(d...) %}
-        | tbH12 _ tbAMPM:?      {% id %}
-        | tbHM24                {% (d) => hm2Date(d...) %}
-        | tbHM12 _ tbAMPM:?     {% id %}
-        | tbHMS24               {% (d) => hms2Date(d...) %}
-        | tbHMS12 _ tbAMPM:?    {% id %}
-        | tbHMSs24              {% (d) => hnss2Date(d...) %}
-        | tbHMSs12 _ tbAMPM:?   {% id %}
+tbTime -> tbHr24					        {% (d) => h2Date(d[0]) %}
+        # | tbHr12 _ tbAMPM:?      {% id %}
+         | tbHM24                {% (d) => hm2Date(d[0][0], d[0][1]) %}
+        # | tbHM12 _ tbAMPM:?     {% id %}
+        | tbHMS24               {% (d) => hms2Date(d[0][0], d[0][1], d[0][2]) %}
+        # | tbHMS12 _ tbAMPM:?    {% id %}
+         | tbHMSs24              {% (d) => hmss2Date(d[0][0], d[0][1], d[0][2], d[0][3]) %}
+        # | tbHMSs12 _ tbAMPM:?   {% id %}
 #        | tbTime8601            {% id %}
 
 #tbTime8601 ->  tbSecsFraction:?   {% (d) => d.join('') %}
 
-tbH24 -> [0-2]:? tbDigit 							{% (d) => [join(d)] %}
-tbH12 -> [0-1]:? tbDigit 							{% (d) => [join(d)]  %}
-tbHM24 -> tbH24 tbTimeSep [0-5] tbDigit 	{% (d) => d[0].push(d[2], d[3]) %}
-tbHM12 -> tbH12 tbTimeSep [0-5] tbDigit 	{% (d) => d[0].push(d[2], d[3]) %}
-tbHMS24 -> tbHM24 tbTimeSep [0-5] tbDigit {% (d) => d[0].push(d[2], d[3]) %}
-tbHMS12 -> tbHM12 tbTimeSep [0-5] tbDigit {% (d) => d[0].push(d[2], d[3]) %}
-tbHMSs24 -> tbHMS24 tbSecsFraction {% (d) => d[0].push(d[1]) %}
-tbHMSs12 -> tbHMS12 tbSecsFraction {% (d) => d[0].push(d[1]) %}
+tbHM24 -> tbHr24 tbTimeSep tbMins 	{% (d) => [d[0], d[2]] %}
+# tbHM12 -> tbHr12 tbTimeSep [0-5] tbDigit 	{% (d) => d[0].push(d[2], d[3]) %}
+tbHMS24 -> tbHr24 tbTimeSep tbMins tbTimeSep tbSecs {% (d) => [d[0], d[2], d[4]] %}
+# tbHMS12 -> tbHM12 tbTimeSep [0-5] tbDigit {% (d) => d[0].push(d[2], d[3]) %}
+tbHMSs24 -> tbHr24 tbTimeSep tbMins tbTimeSep tbSecs tbSecsFraction {% (d) => [d[0], d[2], d[4], d[5]] %}
+# tbHMSs12 -> tbHMS12 tbSecsFraction {% (d) => d[0].push(d[1]) %}
 
-#tbHours -> [0-2]:? tbDigit                             {% (d) => d.join('') %}
-#tbMins -> [0-5]:? tbDigit                              {% (d) => d.join('') %}
-#tbSecs -> [0-5]:? tbDigit tbSecsFraction:?             {% (d) => d.join('') %}
+tbHr24 -> [0-2]:? tbDigit 							{% (d) => join(d) %}
+tbHr12 -> [0-1]:? tbDigit 							{% (d) => join(d)  %}
+tbMins -> [0-5]:? tbDigit                           {% (d) => join(d) %}
+tbSecs -> [0-5]:? tbDigit                           {% (d) => join(d) %}
 tbSecsFraction -> "." tbDigit tbDigit tbDigit:?   		  {% (d) => d[1] + d[2] + d[3] %}
 tbAMPM -> ("am" | "AM" | "pm" | "PM")  {% id %}
 
@@ -220,3 +219,4 @@ tbDigit   -> [0-9]            {% id %}
 # Whitespace. Postprocrssor is null-returning function for memory efficiency.
 __ -> [\s]:+	{% () => null %}   # Mandatory whitespace.
 _ -> [\s]:*   {% () => null %}	# Optional whitespace.
+    
