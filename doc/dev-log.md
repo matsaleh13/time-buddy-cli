@@ -201,3 +201,7 @@
     - The utility functions are helping.
     - Still finding it a challenge to find the right place to do an 'expansion' of a pattern into components. It seems that the more I 'modularize' the grammar (i.e. assemble higher level nonterminals from lower-level components), the more likely I am to get an ambiguous grammar. It's almost as though I should make a bunch of highly specific productions, potentially with duplicated nonterminals and terminals, in order to get more precise/less ambiguous results.
     - Still feeling my way I guess. This is very much an organic process I think.
+
+- As I work my way through the grammar, I keep wondering if I should also create an abstract syntax tree (AST), as I've seen done in some other sample grammars using `nearley.js`. 
+  - On one hand, it seems like a nice way to separate concerns between parsing the grammar and interpreting the results.
+  - But, in my case I will only ever have a single expression to parse. Other than parens, there isn't really any concept of scope, and certainly no control flow, so it's really simple and may not need an AST. TBD I guess.
