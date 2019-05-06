@@ -48,7 +48,7 @@
 
 ## 2019-04-21
 
-- More parsing reseach:
+- More parsing research:
   - Tried playing with the [Nearley Parser Playground](https://omrelli.ug/nearley-playground/):
     - Experimented with the calculator/arithmetic.ne grammar, which kind of made sense.
     - Experimented with the edtf.ne grammar from the edtf.js project, but it didn't seem to recognize anything I typed in.
