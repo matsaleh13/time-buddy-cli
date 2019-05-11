@@ -205,3 +205,39 @@
 - As I work my way through the grammar, I keep wondering if I should also create an abstract syntax tree (AST), as I've seen done in some other sample grammars using `nearley.js`. 
   - On one hand, it seems like a nice way to separate concerns between parsing the grammar and interpreting the results.
   - But, in my case I will only ever have a single expression to parse. Other than parens, there isn't really any concept of scope, and certainly no control flow, so it's really simple and may not need an AST. TBD I guess.
+
+## 2019-05-11
+
+- WIP on grammar:
+  - Figured out that all `tbTime` nonterminals need to be converted to an epoch timestamp, not just a Date() object.
+- Read up on JavaScript date/time concepts:
+  - Notes: [Date/Time Notes](date-time-notes.md)
+- More parsing issues for dates and times:
+  - I shouldn't rely on JS `Date(<string>)` or `Date.parse(<string>)`, according to all good authorities.
+  - If I convert to a Date() too early, then I having trouble resolving the full tbTimePoint in the case where I have both a `tbDate` and `tbTime`, e.g.
+
+  ```ebnf
+  tbTimePoint -> tbDate          {% xxx %}
+               | tbTime          {% xxx %}
+               | tbDate _ tbTime {% xxx %}  # <= this case
+  ```
+
+  - What happens in the above case, is that both `tbDate` and `tbTime` are a complete Date instance. `tbDate` holds only the date part, with the time part zeroed out (e.g. midnight). However, `tbTime` assumes the date part is 'today', as given a time with no date, we assume that normally. Yet, to combine the `tbDate` and `tbTime` values together, I somehow need to strip out the date part from `tbTime`, then add the result to `tbDate` to get the correct value.
+  - Well, that did it:
+  
+  ```javascript
+    function mergeDateAndTime(dateOnlyValue, defaultTimeValue) {
+      const timeOnlyTimestamp = defaultTimeValue.getTime() - dateOnlyValue.getTime();
+      const mergedTimestamp = dateOnlyValue.getTime() + timeOnlyTimestamp;
+      return new Date(mergedTimestamp);
+    }
+
+    # nearley grammar
+    tbTimePoint -> tbDate    {% (d) => new Date(d[0]).getTime() %}
+                | tbTime    {% (d) => d[0].getTime() %}
+                | tbDate _ tbTime {% (d) => mergeDateAndTime(new Date(d[0]), d[2]) %}
+
+    # nearley test
+    11 May 2019 21:17:44  # note assumes local (CDT)
+    => "2019-05-12T02:17:44.000Z"
+  ```

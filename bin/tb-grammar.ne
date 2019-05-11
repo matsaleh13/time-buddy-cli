@@ -54,28 +54,37 @@ tbValue -> tbNumber			 {% (d) => d[0] %}
       _date.getMilliseconds(),
     ]
   }
+
   function h2Date(hour) {
     const [year,month,date] = date2Array();
     return new Date(year,month,date,toInt(hour));
   }
+
   function hm2Date(hour, minute) {
     const [year,month,date] = date2Array();
     return new Date(year,month,date,toInt(hour),toInt(minute));
   }
+
   function hms2Date(hour, minute, second) {
     const [year,month,date] = date2Array();
     return new Date(year,month,date,toInt(hour),toInt(minute),toInt(second));
   }
+
   function hmss2Date(hour, minute, second, millisec) {
     const [year,month,date] = date2Array();
     return new Date(year,month,date,toInt(hour),toInt(minute),toInt(second),toInt(millisec));
   }
 
+  function mergeDateAndTime(dateOnlyValue, defaultTimeValue) {
+    const timeOnlyTimestamp = defaultTimeValue.getTime() - dateOnlyValue.getTime();
+    const mergedTimestamp = dateOnlyValue.getTime() + timeOnlyTimestamp;
+    return new Date(mergedTimestamp);
+  }
 %}
 
-tbTimePoint -> tbDate    {% (d) => new Date(d[0]) %}
-             | tbTime    {% id %}
-#             #  | tbDate tbTime
+tbTimePoint -> tbDate    {% (d) => new Date(d[0]).getTime() %}
+             | tbTime    {% (d) => d[0].getTime() %}
+             | tbDate _ tbTime {% (d) => mergeDateAndTime(new Date(d[0]), d[2]) %}
 #             #  | tbTime tbDate
 
 
@@ -87,12 +96,14 @@ tbDuration -> tbNumber _ tbTimeUnit      {% (d) => d[0] * d[2] %}
 
 
 # Dates
-
+# TODO: simplify - focus on number and type of digits per field, not whether year, month or day.
+#       Let the locale determine how to read the parsed string.
 tbDate -> tbYear tbDateSep tbMonth tbDateSep tbDay	{% (d) => d.join('') %}
         | tbMonth tbDateSep tbDay tbDateSep tbYear  {% (d) => d.join('') %}
         | tbDay tbDateSep tbMonth tbDateSep tbYear  {% (d) => d.join('') %}
-        | tbMonth _ tbDay ",":? _ tbYear  			{% (d) => d.join('') %}
-        | tbDay _ tbMonth ",":? _ tbYear  			{% (d) => d.join('') %}
+        | tbDay __ tbMonth __ tbYear  				{% (d) => d.join('') %}
+        | tbMonth _ tbDay ",":? _ tbYear  			{% (d) => d.join(' ') %}
+        | tbDayOfWeek:? _ tbDay _ tbMonth ",":? _ tbYear  			{% (d) => `${d[2]} ${d[4]} ${d[5]} ${d[7]}` %}
         # | tbYear   {% id %}
         # | tbMonth  {% id %}
         # | tbDay    {% id %}
@@ -122,31 +133,48 @@ tbMonth -> tbJan  {% id %}
 tbDay -> [0-3]:? tbDigit   {% (d) => d[0] + d[1] %}
 
 # TODO: i18n
-tbJan -> "January"i    | "Jan"i | "01" | "1"  {% id %}
-tbFeb -> "February"i   | "Feb"i | "02" | "2"  {% id %}
-tbMar -> "March"i      | "Mar"i | "03" | "3"  {% id %}
-tbApr -> "April"i      | "Apr"i | "04" | "4"  {% id %}
-tbMay -> "May"i        | "May"i | "05" | "5"  {% id %}
-tbJun -> "June"i       | "Jun"i | "06" | "6"  {% id %}
-tbJul -> "July"i       | "Jul"i | "07" | "7"  {% id %}
-tbAug -> "August"i     | "Aug"i | "08" | "8"  {% id %}
-tbSep -> "September"i  | "Sep"i | "09" | "9"  {% id %}
-tbOct -> "October"i    | "Oct"i | "10" | "10" {% id %}
-tbNov -> "November"i   | "Nov"i | "11" | "11" {% id %}
-tbDec -> "December"i   | "Dec"i | "12" | "12" {% id %}
+tbJan -> ("January"i    | "Jan"i | "01" | "1" ) {% id %}
+tbFeb -> ("February"i   | "Feb"i | "02" | "2" ) {% id %}
+tbMar -> ("March"i      | "Mar"i | "03" | "3" ) {% id %}
+tbApr -> ("April"i      | "Apr"i | "04" | "4" ) {% id %}
+tbMay -> ("May"i        | "May"i | "05" | "5" ) {% id %}
+tbJun -> ("June"i       | "Jun"i | "06" | "6" ) {% id %}
+tbJul -> ("July"i       | "Jul"i | "07" | "7" ) {% id %}
+tbAug -> ("August"i     | "Aug"i | "08" | "8" ) {% id %}
+tbSep -> ("September"i  | "Sep"i | "09" | "9" ) {% id %}
+tbOct -> ("October"i    | "Oct"i | "10" | "10") {% id %}
+tbNov -> ("November"i   | "Nov"i | "11" | "11") {% id %}
+tbDec -> ("December"i   | "Dec"i | "12" | "12") {% id %}
 
 tbDateSep -> [-/.] {% id %}
 
-# Time
+# Day of the Week
+tbDayOfWeek -> tbSun {% id %}
+             | tbMon {% id %}
+             | tbTue {% id %}
+             | tbWed {% id %}
+             | tbThu {% id %}
+             | tbFri {% id %}
+             | tbSat {% id %}
 
-tbTime -> tbHr24					        {% (d) => h2Date(d[0]) %}
-        # | tbHr12 _ tbAMPM:?      {% id %}
-         | tbHM24                {% (d) => hm2Date(d[0][0], d[0][1]) %}
-        # | tbHM12 _ tbAMPM:?     {% id %}
-        | tbHMS24               {% (d) => hms2Date(d[0][0], d[0][1], d[0][2]) %}
-        # | tbHMS12 _ tbAMPM:?    {% id %}
-         | tbHMSs24              {% (d) => hmss2Date(d[0][0], d[0][1], d[0][2], d[0][3]) %}
-        # | tbHMSs12 _ tbAMPM:?   {% id %}
+tbSun -> ("Sunday"i    | "Sun"i)            {% id %}
+tbMon -> ("Monday"i    | "Mon"i)            {% id %}
+tbTue -> ("Tuesday"i   | "Tue"i | "Tues"i ) {% id %}
+tbWed -> ("Wednesday"i | "Wed"i | "Weds"i ) {% id %}
+tbThu -> ("Thursday"i  | "Thu"i | "Thurs"i) {% id %}
+tbFri -> ("Friday"i    | "Fri"i)            {% id %}
+tbSat -> ("Saturday"i  | "Sat"i)            {% id %}
+
+# Time
+# All parsed strings resolve to a Javascript Date object.
+tbTime -> tbHr24                {% (d) => h2Date(d[0]) %}
+        #  | tbHr12 _ tbAMPM:?    {% id %}
+         | tbHM24               {% (d) => hm2Date(d[0][0], d[0][1]) %}
+        #  | tbHM12 _ tbAMPM:?    {% id %}
+         | tbHMS24              {% (d) => hms2Date(d[0][0], d[0][1], d[0][2]) %}
+        #  | tbHMS12 _ tbAMPM:?   {% id %}
+         | tbHMSs24             {% (d) => hmss2Date(d[0][0], d[0][1], d[0][2], d[0][3]) %}
+        #  | tbHMSs12 _ tbAMPM:?  {% id %}
 #        | tbTime8601            {% id %}
 
 #tbTime8601 ->  tbSecsFraction:?   {% (d) => d.join('') %}
@@ -219,4 +247,3 @@ tbDigit   -> [0-9]            {% id %}
 # Whitespace. Postprocrssor is null-returning function for memory efficiency.
 __ -> [\s]:+	{% () => null %}   # Mandatory whitespace.
 _ -> [\s]:*   {% () => null %}	# Optional whitespace.
-    
