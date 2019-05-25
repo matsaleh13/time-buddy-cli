@@ -241,3 +241,29 @@
     11 May 2019 21:17:44  # note assumes local (CDT)
     => "2019-05-12T02:17:44.000Z"
   ```
+
+## 2019-05-25
+
+- Thinking that the grammar is too tightly coupled to the computation the app needs to do.
+- Also it's really ambiguous, and that could bite me in the ass, I'm sure.
+- My gut is telling me that an AST (abstract syntax tree) would help here:
+
+  - Separation of concerns
+  - Possibly allow more context-free-ness
+
+- Examples of nearley.js with an AST (or just AST):
+
+  - [andrejewski/solvent](https://github.com/andrejewski/solvent) - calculator with equations and variables. 
+    - Fairly simple.
+    - Not well documented.
+    - Code indicates a two-step `parse(statement)` then `compute(exp)` approach. The `parse` takes a string containing the arithmetic statement and returns an AST. The `compute(exp)` operates on the AST and returns the result. This does make sense, if I could just see how to apply the AST concept to the `time-buddy` problem.
+  - [Mithgol/node-abstract-syntax-tree](https://github.com/Mithgol/node-abstract-syntax-tree) - An AST NPM package for node.js.
+    - TODO: evaluate this, or learn from it.
+    - Last commit was 2 years ago.
+  - [ASTQuery](https://prataprc.github.io/astquery.io/) - A golang AST implementation:
+    - TODO: learn from this.
+  - [AST for JavaScript developers](https://itnext.io/ast-for-javascript-developers-3e79aeb08343) - overview of AST.
+  - [AST Explorer](https://astexplorer.net/) - Playground website for experimenting with ASTs.
+  - [Introduction to Abstract Syntax Trees](https://egghead.io/lessons/javascript-introduction-to-abstract-syntax-trees) - Video.
+  - [Abstract syntax trees on Javascript](https://medium.com/@jotadeveloper/abstract-syntax-trees-on-javascript-534e33361fc7) - Reviews ASTs for JS compilers and analysis tools.
+  - [Abstract Syntax Trees](https://javascriptstore.com/2017/10/02/abstract-syntax-trees/) - ASTs for JavaScript code.
