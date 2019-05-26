@@ -171,9 +171,77 @@ Time Buddy is a command line interface (CLI) tool for performing time operations
 - Create by hand or via `set` command:
   - Sets local if exists, otherwise user.
 
+### Abstract Syntax Tree
+
+- Some guidance from Wikipedia article:
+  > The design of an AST is often closely linked with the design of a compiler and its expected features.
+  >
+  > Core requirements include the following:
+  >
+  > - Variable types must be preserved, as well as the location of each declaration in source code.
+  > - The order of executable statements must be explicitly represented and well defined.
+  > - Left and right components of binary operations must be stored and correctly identified.
+  > - Identifiers and their assigned values must be stored for assignment statements.
+  >
+  > These requirements can be used to design the data structure for the AST.
+  >
+  > Some operations will always require two elements, such as the two terms for addition. However, some language constructs require an arbitrarily large number of children, such as argument lists passed to programs from the command shell. As a result, an AST used to represent code written in such a language has to also be flexible enough to allow for quick addition of an unknown quantity of children.
+
+- Requirements:
+  - Types:
+    - Number:
+      - Integer
+      - Decimal
+    - TimePoint
+    - Duration
+    - String
+  - Operators:
+    - Unary:
+      - Conversions
+      - Units
+    - Binary:
+      - Add
+      - Subtract
+      - Multiply
+      - Divide
+
+- Data Structure:
+  - Binary Tree
+    - Left and Right children.
+    - Unary operator has one null child.
+    - Literals (terminals) are leaves.
+  - Nodes:
+    - Operation
+    - Data Type (returned by operation)
+    - Argument0 (left child)
+    - Argument1 (right child)
+  - Leaves:
+    - Data Type
+    - Literal (value)
+
+- AST Class Design:
+  - Node base class
+    - Type
+    - Metadata
+    - Node Array (children)
+  - Leaf child class
+    - Literal value
+  - Unary Operator child class
+    - Argument0
+  - Binary Operator child class
+    - Argument0
+    - Argument1
+
+
 ## Resources
 
 - Example uses of `nearly.js` parser toolkit:
   - [solvent](https://github.com/andrejewski/solvent) math calculator.
   - [EDTF.js](https://github.com/inukshuk/edtf.js) Extended Date-Time Format parser.
 
+- AST Resources:
+  - [Wikipedia](https://en.wikipedia.org/wiki/Abstract_syntax_tree)
+  - [AST Explorer](https://astexplorer.net/) - Playground website for experimenting with ASTs.
+  - [Mithgol/node-abstract-syntax-tree](https://github.com/Mithgol/node-abstract-syntax-tree) - An AST NPM package for node.js.
+  - [andrejewski/solvent](https://github.com/andrejewski/solvent) - calculator with equations and variables. 
+  - [Building a compiler for your own language: from the parse tree to the Abstract Syntax Tree](https://tomassetti.me/parse-tree-abstract-syntax-tree/) - Describes design of AST for a made up language.

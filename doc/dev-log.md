@@ -262,8 +262,18 @@
     - Last commit was 2 years ago.
   - [ASTQuery](https://prataprc.github.io/astquery.io/) - A golang AST implementation:
     - TODO: learn from this.
-  - [AST for JavaScript developers](https://itnext.io/ast-for-javascript-developers-3e79aeb08343) - overview of AST.
+  - [AST for JavaScript developers](https://itnext.io/ast-for-javascript-developers-3e79aeb08343) - overview of the JavaScript AST.
   - [AST Explorer](https://astexplorer.net/) - Playground website for experimenting with ASTs.
-  - [Introduction to Abstract Syntax Trees](https://egghead.io/lessons/javascript-introduction-to-abstract-syntax-trees) - Video.
+  - [Introduction to Abstract Syntax Trees](https://egghead.io/lessons/javascript-introduction-to-abstract-syntax-trees) - Video overview of the JavaScript AST.
   - [Abstract syntax trees on Javascript](https://medium.com/@jotadeveloper/abstract-syntax-trees-on-javascript-534e33361fc7) - Reviews ASTs for JS compilers and analysis tools.
   - [Abstract Syntax Trees](https://javascriptstore.com/2017/10/02/abstract-syntax-trees/) - ASTs for JavaScript code.
+
+## 2019-05-26
+
+- More AST research/learning:
+  - Mostly (re-)reading above links.
+  - Also found a few more:
+    - [Wikipedia](https://en.wikipedia.org/wiki/Abstract_syntax_tree)
+    - [Building a compiler for your own language: from the parse tree to the Abstract Syntax Tree](https://tomassetti.me/parse-tree-abstract-syntax-tree/) - Describes design of AST for a made up language.
+
+- Started rough design of AST.
