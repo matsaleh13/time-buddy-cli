@@ -277,3 +277,12 @@
     - [Building a compiler for your own language: from the parse tree to the Abstract Syntax Tree](https://tomassetti.me/parse-tree-abstract-syntax-tree/) - Describes design of AST for a made up language.
 
 - Started rough design of AST.
+
+## 2019-05-27
+
+- Iterating on AST design and integration with grammar.
+- Still trying to get my mind around the paradigm.
+- Trying to map the existing inline functions (operations) to AST nodes that will perform them:
+  - Forked the tb-grammar.ne to tb-grammer-ast.ne.
+  - Just for now, to iterate on the changes.
+  - Concerned that I won't be able to use the playground to get instant feedback on the changes.

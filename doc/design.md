@@ -232,6 +232,20 @@ Time Buddy is a command line interface (CLI) tool for performing time operations
     - Argument0
     - Argument1
 
+- Processing Notes:
+  - Two phase process, `parse` and `compute`.
+  - `parse`:
+    - Feeds the input string(s) to nearley. 
+    - Result is an array of or more results. More than one means ambiguous grammar.
+    - Each parse result will be the root node of an AST.
+  - `compute`:
+    - Input is the root node(s) of the AST(s) returned from parse.
+    - If more than one, we need to decide how to resolve the ambiguity.
+    - Visits the AST node tree and invokes the appropriate function for each node.
+    - Returns the final result of the computation.
+  - Grammar:
+    - Productions must ultimately resolve to an AST node.
+    - Intermediate productions may resolve to anything needed for input into another production, but they won't be added to the AST.
 
 ## Resources
 
