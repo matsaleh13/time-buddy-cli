@@ -1,3 +1,6 @@
+@{% const ast = require('./solvent-ast') %}
+
+
 main -> tbCommand __ tbExpression _  {% (d) => d[0] + ' ' + d[1] %}
       | tbExpression                 {% (d) => d[0] %}
 
@@ -19,21 +22,21 @@ tbP -> "(" _ tbAS _ ")" {% (d) => d[2] %}
 #	 | tbDuration        {% id %}
 
 # Exponents
-tbE -> tbP __ "^" __ tbE  {% (d) => Math.pow(d[0], d[4]) %}
+tbE -> tbP __ "^" __ tbE  {% (d) => ast.Exponentiation([d[0],d[4]]) %}
      | tbP              {% id %}
 
 # Multiplication and division
-tbMD -> tbMD __ "*" __ tbE  {% (d) => d[0]*d[4] %}
-      | tbMD __ "/" __ tbE  {% (d) => d[0]/d[4] %}
+tbMD -> tbMD __ "*" __ tbE  {% (d) => ast.Multiplication([d[0],d[4]]) %}
+      | tbMD __ "/" __ tbE  {% (d) => ast.Division([d[0],d[4]]) %}
       | tbE               {% id %}
 
 # Addition and subtraction
-tbAS -> tbAS __ "+" __ tbMD {% (d) => d[0]+d[4] %}
-      | tbAS __ "-" __ tbMD {% (d) => d[0]-d[4] %}
+tbAS -> tbAS __ "+" __ tbMD {% (d) => ast.Addition([d[0],d[4]]) %}
+      | tbAS __ "-" __ tbMD {% (d) => ast.Subtraction([d[0],d[4]]) %}
       | tbMD              {% id %}
 
 # Values
-tbValue -> tbNumber			 {% (d) => d[0] %}
+tbValue -> tbNumber			 {% (d) => ast.Number([[d[0]]) %}
          | tbTimePoint       {% id %}
          | tbDuration        {% id %}
 
