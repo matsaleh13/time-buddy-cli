@@ -286,3 +286,59 @@
   - Forked the tb-grammar.ne to tb-grammer-ast.ne.
   - Just for now, to iterate on the changes.
   - Concerned that I won't be able to use the playground to get instant feedback on the changes.
+
+## 2019-06-08
+
+- More AST research and design iteration.
+- Looking at the use of the ast in `solvent.js`:
+  - Very simple tree implementation.
+  - One node type for each nonterminal to process (roughly).
+  - Each node type implemented as a function that:
+    - takes as input an array of Nearley.js "elements" from parsing, plus some misc attributes.
+    - returns an object that is a node of the AST.
+  - This such that as we walk through the grammar, each post-processor returns either:
+    - native JS data, either array or scalar.
+    - an AST node.
+  - The `solvent.js` `parse` function invokes the `nearley.Parser` object and then calls `feed` on it. 
+    - This returns a tree of Nearley elements. 
+    - Then calls `clean` on the returned output, which walks the tree and then hooks up the nodes of the AST. 
+    - I think. It's pretty terse and not commented at all.
+  - The main process is:
+    - parse -> takes string input, returns populated AST.
+    - compute -> takes AST, returns calculation result.
+  - The AST node object is:
+
+    ```Javascript
+    {
+      type: String,
+      nodes: Array,
+      attrs: Array,
+    }
+    ```
+
+    - The `nodes` array contains other node objects or scalar (terminal) values.
+  - The `compute` function recursively walks the AST:
+    - If it finds a number, returns it.
+    - If it finds a function, calls it via `map` and `reduce` over its child nodes.
+    - Otherwise, error.
+- Taking some general clues from this:
+  - The time-buddy parser should (only) interpret:
+    - values
+    - types
+    - operations to perform
+    - expression/relational structure
+  - A separate 'compute' step should:
+    - walk the AST nodes.
+    - compute the values of each node.
+    - return the overall result.
+- How to handle polymorphic operations?
+  - e.g. arithmetic on numbers vs. time points, or mixed?
+  - Option A: let the parser interpret the types and values, and call a single polymorphic function that "does the right thing" based on the types.
+  - Option B: have the parser pick a specific function for each combination of types (e.g. number and number, time point and number, etc.).
+  - Option A means the parser has fewer unique productions but is potentially more ambiguous. The compute code will be more complex though and much dispatch on types.
+  - Option B means that the parser is more specific, with more productions, but probably less ambiguous. The compute code will be simpler, with each nonterminal dispatching to a specific function.
+- I guess I'm leaning towards Option A for now:
+  - It's harder to debug the parser than it is the code.
+  - The current parser implementation already does it this way, so I can try this first.
+  - TBH, it's hard to tell which is best.
+- Since I'm still learning/experimenting, I'm tempted to just "steal" the `solvent.js` AST outright and "plug" it into the time-buddy code as a first pass. This might help me learn it better. I still want to implement my own though.
