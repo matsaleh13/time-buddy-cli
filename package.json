@@ -4,7 +4,8 @@
   "description": "A command line tool for working with time concepts.",
   "main": "cli.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha",
+    "build": "nearleyc lib/tb-grammar-ast.ne > lib/tb-grammar-ast.js"
   },
   "engines": {
     "node": ">=8"
@@ -18,7 +19,9 @@
     "tb": "bin/time-buddy.js"
   },
   "devDependencies": {
-    "eslint": "^5.12.1"
+    "chai": "^4.2.0",
+    "eslint": "^5.12.1",
+    "mocha": "^6.1.4"
   },
   "dependencies": {
     "minimist": "^1.2.0",

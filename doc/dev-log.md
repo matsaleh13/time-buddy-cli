@@ -342,3 +342,17 @@
   - The current parser implementation already does it this way, so I can try this first.
   - TBH, it's hard to tell which is best.
 - Since I'm still learning/experimenting, I'm tempted to just "steal" the `solvent.js` AST outright and "plug" it into the time-buddy code as a first pass. This might help me learn it better. I still want to implement my own though.
+
+## 2019-06-09
+
+- Hacked in the `solvent.js` AST implementation into my grammar, mostly unchanged:
+  - Added no new AST types, just the basic arithmetic ones that `solvent.js` implemented.
+  - Hooked in calls to `ast.XXX` where reasonable for non-TimePoint values.
+- Wrote a simple mocha test for parsing "2 + 2":
+  - Test calls the `solvent.js` `parse` function.
+  - Parsing seems to work, mostly.
+  - Except that the ambiguous grammar returned 4 top-level nonterminals, i.e. 4 possible results of parsing "2 + 2".
+  - The `solvent.js` `parse` function treats this as an error and returns null. I mean, how can it know which one to pick?
+  - Re-reading [Better Earley than Never](https://hardmath123.github.io/earley.html), I noted:
+    > If we had multiple entries that worked in the end, there would be multiple parsings of the grammar. This means the grammar is ambiguous, and this is generally a very bad sign. It can lead to messy programming bugs, or exponentially slow parsing.
+  - Well, that's what I have. So, how to disambiguate it?

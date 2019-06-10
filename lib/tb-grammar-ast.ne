@@ -36,7 +36,7 @@ tbAS -> tbAS __ "+" __ tbMD {% (d) => ast.Addition([d[0],d[4]]) %}
       | tbMD              {% id %}
 
 # Values
-tbValue -> tbNumber			 {% (d) => ast.Number([[d[0]]) %}
+tbValue -> tbNumber			 {% (d) => ast.Number([d[0]]) %}
          | tbTimePoint       {% id %}
          | tbDuration        {% id %}
 
