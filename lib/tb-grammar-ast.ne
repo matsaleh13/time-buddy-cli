@@ -1,6 +1,3 @@
-@{% const ast = require('./solvent-ast') %}
-
-
 main -> tbCommand __ tbExpression _  {% (d) => d[0] + ' ' + d[1] %}
       | tbExpression                 {% (d) => d[0] %}
 
@@ -17,26 +14,24 @@ tbCommand -> "calc"i  {% id %}
 
 # Parentheses
 tbP -> "(" _ tbAS _ ")" {% (d) => d[2] %}
-     | tbValue          {% id %}
-#	 | tbTimePoint       {% id %}
-#	 | tbDuration        {% id %}
+     | tbValue           {% id %}
 
 # Exponents
-tbE -> tbP __ "^" __ tbE  {% (d) => ast.Exponentiation([d[0],d[4]]) %}
+tbE -> tbP __ "^" __ tbE  {% (d) => Math.pow(d[0], d[4]) %}
      | tbP              {% id %}
 
 # Multiplication and division
-tbMD -> tbMD __ "*" __ tbE  {% (d) => ast.Multiplication([d[0],d[4]]) %}
-      | tbMD __ "/" __ tbE  {% (d) => ast.Division([d[0],d[4]]) %}
+tbMD -> tbMD __ "*" __ tbE  {% (d) => d[0]*d[4] %}
+      | tbMD __ "/" __ tbE  {% (d) => d[0]/d[4] %}
       | tbE               {% id %}
 
 # Addition and subtraction
-tbAS -> tbAS __ "+" __ tbMD {% (d) => ast.Addition([d[0],d[4]]) %}
-      | tbAS __ "-" __ tbMD {% (d) => ast.Subtraction([d[0],d[4]]) %}
+tbAS -> tbAS __ "+" __ tbMD {% (d) => d[0]+d[4] %}
+      | tbAS __ "-" __ tbMD {% (d) => d[0]-d[4] %}
       | tbMD              {% id %}
 
 # Values
-tbValue -> tbNumber			 {% (d) => ast.Number([d[0]]) %}
+tbValue -> tbNumber			 {% (d) => d[0] %}
          | tbTimePoint       {% id %}
          | tbDuration        {% id %}
 
@@ -131,9 +126,6 @@ tbMonth -> tbJan  {% id %}
          | tbOct  {% id %}
          | tbNov  {% id %}
          | tbDec  {% id %}
-         | "0" tbDigit {% (d) => d.join('') %}
-         | "1" tbDigit {% (d) => d.join('') %}
-		 | tbDigit     {% id %}
 
 tbDay -> [0-3]:? tbDigit   {% (d) => d[0] + d[1] %}
 
@@ -142,7 +134,7 @@ tbJan -> ("January"i    | "Jan"i | "01" | "1" ) {% id %}
 tbFeb -> ("February"i   | "Feb"i | "02" | "2" ) {% id %}
 tbMar -> ("March"i      | "Mar"i | "03" | "3" ) {% id %}
 tbApr -> ("April"i      | "Apr"i | "04" | "4" ) {% id %}
-tbMay -> ("May"i        | "May"i | "05" | "5" ) {% id %}
+tbMay -> ("May"i                 | "05" | "5" ) {% id %}
 tbJun -> ("June"i       | "Jun"i | "06" | "6" ) {% id %}
 tbJul -> ("July"i       | "Jul"i | "07" | "7" ) {% id %}
 tbAug -> ("August"i     | "Aug"i | "08" | "8" ) {% id %}

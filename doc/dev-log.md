@@ -356,3 +356,50 @@
   - Re-reading [Better Earley than Never](https://hardmath123.github.io/earley.html), I noted:
     > If we had multiple entries that worked in the end, there would be multiple parsings of the grammar. This means the grammar is ambiguous, and this is generally a very bad sign. It can lead to messy programming bugs, or exponentially slow parsing.
   - Well, that's what I have. So, how to disambiguate it?
+
+## 2019-06-15
+
+- Still thinking about how to disambiguate my grammar.
+  - Found a couple places where I had redundant nonterminals:
+
+    ```ebnf
+    tbMonth -> tbJan  {% id %}
+          | tbFeb  {% id %}
+          | tbMar  {% id %}
+          | tbApr  {% id %}
+          | tbMay  {% id %}
+          | tbJun  {% id %}
+          | tbJul  {% id %}
+          | tbAug  {% id %}
+          | tbSep  {% id %}
+          | tbOct  {% id %}
+          | tbNov  {% id %}
+          | tbDec  {% id %}
+          | "0" tbDigit {% (d) => d.join('') %}     # redundant
+          | "1" tbDigit {% (d) => d.join('') %}     # redundant
+          | tbDigit     {% id %}                    # redundant
+    ```
+
+  - The redundancies above were already accounted for in the productions below, which have single and double digit versions of the numeric values that could have either:
+
+    ```ebnf
+    tbJan -> ("January"i    | "Jan"i | "01" | "1" ) {% id %}
+    tbFeb -> ("February"i   | "Feb"i | "02" | "2" ) {% id %}
+    tbMar -> ("March"i      | "Mar"i | "03" | "3" ) {% id %}
+    tbApr -> ("April"i      | "Apr"i | "04" | "4" ) {% id %}
+    tbMay -> ("May"i        | "May"i | "05" | "5" ) {% id %}
+    tbJun -> ("June"i       | "Jun"i | "06" | "6" ) {% id %}
+    tbJul -> ("July"i       | "Jul"i | "07" | "7" ) {% id %}
+    tbAug -> ("August"i     | "Aug"i | "08" | "8" ) {% id %}
+    tbSep -> ("September"i  | "Sep"i | "09" | "9" ) {% id %}
+    tbOct -> ("October"i    | "Oct"i | "10" | "10") {% id %}
+    tbNov -> ("November"i   | "Nov"i | "11" | "11") {% id %}
+    tbDec -> ("December"i   | "Dec"i | "12" | "12") {% id %}
+
+    ```
+
+  - Removing those redundancies actually removed about half of the ambiguous results in my tests, w00t. Maybe there's hope!
+- Experimenting:
+  - If I remove the `tbDuration` and `tbTimePoint` nonterminals from the PEMDAS productions, I get completely unambiguous results with number arithmetic, so that's good.
+  - If I remove only the `tbTimePoint` nonterminals, then I get unambiguous results for both `tbNumber` and `tbTimePoint` arithmetic that does *not* involve any `tbTimePoint` values (obviously).
+  - From that I gather that all my ambiguities result from the (highly complex) `tbTimePoint` productions.
