@@ -362,44 +362,61 @@
 - Still thinking about how to disambiguate my grammar.
   - Found a couple places where I had redundant nonterminals:
 
-    ```ebnf
-    tbMonth -> tbJan  {% id %}
-          | tbFeb  {% id %}
-          | tbMar  {% id %}
-          | tbApr  {% id %}
-          | tbMay  {% id %}
-          | tbJun  {% id %}
-          | tbJul  {% id %}
-          | tbAug  {% id %}
-          | tbSep  {% id %}
-          | tbOct  {% id %}
-          | tbNov  {% id %}
-          | tbDec  {% id %}
-          | "0" tbDigit {% (d) => d.join('') %}     # redundant
-          | "1" tbDigit {% (d) => d.join('') %}     # redundant
-          | tbDigit     {% id %}                    # redundant
-    ```
+  ```ebnf
+  tbMonth -> tbJan  {% id %}
+        | tbFeb  {% id %}
+        | tbMar  {% id %}
+        | tbApr  {% id %}
+        | tbMay  {% id %}
+        | tbJun  {% id %}
+        | tbJul  {% id %}
+        | tbAug  {% id %}
+        | tbSep  {% id %}
+        | tbOct  {% id %}
+        | tbNov  {% id %}
+        | tbDec  {% id %}
+        | "0" tbDigit {% (d) => d.join('') %}     # redundant
+        | "1" tbDigit {% (d) => d.join('') %}     # redundant
+        | tbDigit     {% id %}                    # redundant
+  ```
 
   - The redundancies above were already accounted for in the productions below, which have single and double digit versions of the numeric values that could have either:
 
-    ```ebnf
-    tbJan -> ("January"i    | "Jan"i | "01" | "1" ) {% id %}
-    tbFeb -> ("February"i   | "Feb"i | "02" | "2" ) {% id %}
-    tbMar -> ("March"i      | "Mar"i | "03" | "3" ) {% id %}
-    tbApr -> ("April"i      | "Apr"i | "04" | "4" ) {% id %}
-    tbMay -> ("May"i        | "May"i | "05" | "5" ) {% id %}
-    tbJun -> ("June"i       | "Jun"i | "06" | "6" ) {% id %}
-    tbJul -> ("July"i       | "Jul"i | "07" | "7" ) {% id %}
-    tbAug -> ("August"i     | "Aug"i | "08" | "8" ) {% id %}
-    tbSep -> ("September"i  | "Sep"i | "09" | "9" ) {% id %}
-    tbOct -> ("October"i    | "Oct"i | "10" | "10") {% id %}
-    tbNov -> ("November"i   | "Nov"i | "11" | "11") {% id %}
-    tbDec -> ("December"i   | "Dec"i | "12" | "12") {% id %}
+  ```ebnf
+  tbJan -> ("January"i    | "Jan"i | "01" | "1" ) {% id %}
+  tbFeb -> ("February"i   | "Feb"i | "02" | "2" ) {% id %}
+  tbMar -> ("March"i      | "Mar"i | "03" | "3" ) {% id %}
+  tbApr -> ("April"i      | "Apr"i | "04" | "4" ) {% id %}
+  tbMay -> ("May"i        | "May"i | "05" | "5" ) {% id %}
+  tbJun -> ("June"i       | "Jun"i | "06" | "6" ) {% id %}
+  tbJul -> ("July"i       | "Jul"i | "07" | "7" ) {% id %}
+  tbAug -> ("August"i     | "Aug"i | "08" | "8" ) {% id %}
+  tbSep -> ("September"i  | "Sep"i | "09" | "9" ) {% id %}
+  tbOct -> ("October"i    | "Oct"i | "10" | "10") {% id %}
+  tbNov -> ("November"i   | "Nov"i | "11" | "11") {% id %}
+  tbDec -> ("December"i   | "Dec"i | "12" | "12") {% id %}
 
-    ```
+  ```
 
   - Removing those redundancies actually removed about half of the ambiguous results in my tests, w00t. Maybe there's hope!
 - Experimenting:
   - If I remove the `tbDuration` and `tbTimePoint` nonterminals from the PEMDAS productions, I get completely unambiguous results with number arithmetic, so that's good.
   - If I remove only the `tbTimePoint` nonterminals, then I get unambiguous results for both `tbNumber` and `tbTimePoint` arithmetic that does *not* involve any `tbTimePoint` values (obviously).
   - From that I gather that all my ambiguities result from the (highly complex) `tbTimePoint` productions.
+  - Of the `tbTimeDuration` and `tbNumber` rules, only the one for division is ambiguous.
+  - Also, I found that the `tbDateTimeSep` rule used an "optional whitespace" nonterminal instead of a "required whitespace" nonterminal, so I changed that:
+
+  ```ebnf
+  tbDateTimeSep -> "T" {% id %}
+                 | _  # optional whitespace
+  ```
+  
+  changed to this:
+
+  ```ebnf
+  tbDateTimeSep -> "T" {% id %}
+                 | __  # required whitespace
+  ```
+
+  - That change removed most of the ambiguous results from the `tbTimePoint` related tests.
+  - After the above, and after re-enabling all three of the `tbTimePoint`, `tbDuration`, and `tbNumber` nonterminals in the PEMDAS productions, I still have ambiguity in the arithmetic production rules, but there are fewer of them. Also, I'm starting to get a feel for the thought process of disambiguation. It's more organic and less logical than I'd like I guess. At least, that's how it feels.

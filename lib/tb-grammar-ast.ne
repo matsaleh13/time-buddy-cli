@@ -14,7 +14,10 @@ tbCommand -> "calc"i  {% id %}
 
 # Parentheses
 tbP -> "(" _ tbAS _ ")" {% (d) => d[2] %}
-     | tbValue           {% id %}
+#     | tbValue           {% id %}
+#    | tbNumber          {% id %}
+	 | tbTimePoint       {% id %}
+#	 | tbDuration        {% id %}
 
 # Exponents
 tbE -> tbP __ "^" __ tbE  {% (d) => Math.pow(d[0], d[4]) %}
@@ -28,12 +31,16 @@ tbMD -> tbMD __ "*" __ tbE  {% (d) => d[0]*d[4] %}
 # Addition and subtraction
 tbAS -> tbAS __ "+" __ tbMD {% (d) => d[0]+d[4] %}
       | tbAS __ "-" __ tbMD {% (d) => d[0]-d[4] %}
+#	  | tbAS __ "+" __ tbNumber {% (d) => d[0]+d[4] %}
+#	  | tbAS __ "-" __ tbNumber {% (d) => d[0]-d[4] %}
+#	  | tbTimePoint {% id %}
+#	  | tbDuration {% id %}
       | tbMD              {% id %}
 
 # Values
-tbValue -> tbNumber			 {% (d) => d[0] %}
-         | tbTimePoint       {% id %}
-         | tbDuration        {% id %}
+#tbValue -> tbNumber			 {% (d) => d[0] %}
+#         | tbTimePoint       {% id %}
+#         | tbDuration        {% id %}
 
 
 # Time Point and Duration
@@ -83,10 +90,9 @@ tbValue -> tbNumber			 {% (d) => d[0] %}
 tbTimePoint -> tbDate    {% (d) => new Date(d[0]).getTime() %}
              | tbTime    {% (d) => d[0].getTime() %}
              | tbDate tbDateTimeSep tbTime {% (d) => mergeDateAndTime(new Date(d[0]), d[2]) %}
-#             #  | tbTime tbDate
 
 tbDateTimeSep -> "T" {% id %}
-              | _
+              | __
 
 tbDuration -> tbNumber _ tbTimeUnit      {% (d) => d[0] * d[2] %}
 
@@ -126,6 +132,9 @@ tbMonth -> tbJan  {% id %}
          | tbOct  {% id %}
          | tbNov  {% id %}
          | tbDec  {% id %}
+#         | "0" tbDigit {% (d) => d.join('') %}
+#         | "1" tbDigit {% (d) => d.join('') %}
+#		 | tbDigit     {% id %}
 
 tbDay -> [0-3]:? tbDigit   {% (d) => d[0] + d[1] %}
 
