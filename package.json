@@ -24,7 +24,7 @@
     "mocha": "^6.1.4"
   },
   "dependencies": {
-    "minimist": "^1.2.0",
+    "minimist": "^1.2.6",
     "moment": "^2.24.0",
     "nearley": "^2.16.0"
   }
