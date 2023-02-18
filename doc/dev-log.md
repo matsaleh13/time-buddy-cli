@@ -395,7 +395,6 @@
   tbOct -> ("October"i    | "Oct"i | "10" | "10") {% id %}
   tbNov -> ("November"i   | "Nov"i | "11" | "11") {% id %}
   tbDec -> ("December"i   | "Dec"i | "12" | "12") {% id %}
-
   ```
 
   - Removing those redundancies actually removed about half of the ambiguous results in my tests, w00t. Maybe there's hope!
@@ -420,3 +419,10 @@
 
   - That change removed most of the ambiguous results from the `tbTimePoint` related tests.
   - After the above, and after re-enabling all three of the `tbTimePoint`, `tbDuration`, and `tbNumber` nonterminals in the PEMDAS productions, I still have ambiguity in the arithmetic production rules, but there are fewer of them. Also, I'm starting to get a feel for the thought process of disambiguation. It's more organic and less logical than I'd like I guess. At least, that's how it feels.
+
+## 2019-06-16
+
+- Ongoing iteration and experimenting with disambiguating the grammar.
+- Also, found additional resources worth exploring:
+  - [More example grammars](https://github.com/kach/nearley/tree/master/examples)
+  - [Wikipedia page about Earley parser](https://en.wikipedia.org/wiki/Earley_parser)
