@@ -26,3 +26,16 @@ build/Release
 # Dependency directory
 # https://docs.npmjs.com/misc/faq#should-i-check-my-node-modules-folder-into-git
 node_modules
+
+# Build output
+dist/
+
+# pnpm
+.pnpm-store/
+
+# Claude Code session files
+.claude/
+
+# Python
+__pycache__/
+*.pyc

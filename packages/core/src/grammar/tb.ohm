@@ -1,0 +1,141 @@
+TimeBuddy {
+
+  // ---------------------------------------------------------------------------
+  // SYNTACTIC RULES — uppercase names; Ohm auto-skips whitespace between terms.
+  // Used for the expression grammar where operators can have surrounding spaces.
+  // ---------------------------------------------------------------------------
+
+  Expression
+    = Command Expr  -- withCommand
+    | Expr
+
+  Command (a command keyword)
+    = caseInsensitive<"calc">
+    | caseInsensitive<"list">
+    | caseInsensitive<"count">
+    | caseInsensitive<"set">
+
+  // PEMDAS — each level delegates to the next tighter binding.
+  Expr
+    = Expr "+" Term  -- add
+    | Expr "-" Term  -- sub
+    | Term
+
+  Term
+    = Term "*" Factor  -- mul
+    | Term "/" Factor  -- div
+    | Factor
+
+  Factor
+    = Primary "^" Factor  -- exp
+    | Primary
+
+  // Priority: duration before datetime before keyword before number.
+  // This ensures "5d" is a duration, not the number 5 followed by "d".
+  Primary
+    = "(" Expr ")"  -- paren
+    | duration
+    | datetime
+    | keyword
+    | number
+
+
+  // ---------------------------------------------------------------------------
+  // LEXICAL RULES — lowercase names; NO auto whitespace skipping.
+  // Spaces must be written explicitly where they are expected.
+  // ---------------------------------------------------------------------------
+
+  keyword (a keyword)
+    = caseInsensitive<"tomorrow">
+    | caseInsensitive<"today">
+    | caseInsensitive<"now">
+
+
+  // --- Duration ---------------------------------------------------------------
+
+  duration (a duration)
+    = number " " timeUnit  -- withSpace
+    | number timeUnit       -- noSpace
+
+  timeUnit (a time unit)
+    = caseInsensitive<"milliseconds"> | caseInsensitive<"millisecond">
+    | caseInsensitive<"millisecs">    | caseInsensitive<"millisec">
+    | caseInsensitive<"millis">       | caseInsensitive<"milli">
+    | caseInsensitive<"msecs">        | caseInsensitive<"msec">
+    | caseInsensitive<"ms">
+    | caseInsensitive<"seconds"> | caseInsensitive<"second">
+    | caseInsensitive<"secs">    | caseInsensitive<"sec">
+    | caseInsensitive<"s">
+    | caseInsensitive<"minutes"> | caseInsensitive<"minute">
+    | caseInsensitive<"mins">    | caseInsensitive<"min">
+    | caseInsensitive<"m">
+    | caseInsensitive<"hours"> | caseInsensitive<"hour">
+    | caseInsensitive<"hrs">   | caseInsensitive<"hr">
+    | caseInsensitive<"h">
+    | caseInsensitive<"weeks"> | caseInsensitive<"week">
+    | caseInsensitive<"wks">   | caseInsensitive<"wk">
+    | caseInsensitive<"w">
+    | caseInsensitive<"days"> | caseInsensitive<"day">
+    | caseInsensitive<"dys">  | caseInsensitive<"dy">
+    | caseInsensitive<"d">
+    | caseInsensitive<"months"> | caseInsensitive<"month">
+    | caseInsensitive<"mons">   | caseInsensitive<"mon">
+    | caseInsensitive<"years"> | caseInsensitive<"year">
+    | caseInsensitive<"yrs">   | caseInsensitive<"yr">
+    | caseInsensitive<"y">
+
+
+  // --- Datetime ---------------------------------------------------------------
+
+  datetime (a date or time value)
+    = date "T" time  -- isoDatetime
+    | date " " time  -- dateAndTime
+    | date           -- dateOnly
+    | time           -- timeOnly
+
+  // Date formats, most-specific first.
+  // dateSep can be - / or .
+  // oneOrTwoDigits handles single or double digit months/days (e.g. 3-15-2019).
+  date (a date)
+    = fourDigits dateSep oneOrTwoDigits dateSep oneOrTwoDigits    -- ymd
+    | oneOrTwoDigits dateSep oneOrTwoDigits dateSep fourDigits    -- mdY
+    | oneOrTwoDigits dateSep oneOrTwoDigits dateSep twoDigits     -- mdy
+    | oneOrTwoDigits " " monthName " " fourDigits                 -- dmY
+    | monthName " " oneOrTwoDigits ","? " " fourDigits            -- mDY
+
+  dateSep (a date separator) = "-" | "/" | "."
+
+  // Helper digit groupings (lexical)
+  fourDigits = digit digit digit digit
+  twoDigits  = digit digit
+  oneOrTwoDigits = digit digit?
+
+  time (a time value)
+    = twoDigits ":" twoDigits ":" twoDigits "." threeDigits  -- hmsf
+    | twoDigits ":" twoDigits ":" twoDigits                  -- hms
+    | twoDigits ":" twoDigits                                -- hm
+
+  threeDigits = digit digit digit
+
+  monthName (a month name)
+    = caseInsensitive<"january">   | caseInsensitive<"jan">
+    | caseInsensitive<"february">  | caseInsensitive<"feb">
+    | caseInsensitive<"march">     | caseInsensitive<"mar">
+    | caseInsensitive<"april">     | caseInsensitive<"apr">
+    | caseInsensitive<"may">
+    | caseInsensitive<"june">      | caseInsensitive<"jun">
+    | caseInsensitive<"july">      | caseInsensitive<"jul">
+    | caseInsensitive<"august">    | caseInsensitive<"aug">
+    | caseInsensitive<"september"> | caseInsensitive<"sep">
+    | caseInsensitive<"october">   | caseInsensitive<"oct">
+    | caseInsensitive<"november">  | caseInsensitive<"nov">
+    | caseInsensitive<"december">  | caseInsensitive<"dec">
+
+
+  // --- Numbers ----------------------------------------------------------------
+
+  number (a number)
+    = digit+ "." digit+  -- decimal
+    | digit+             -- integer
+
+}

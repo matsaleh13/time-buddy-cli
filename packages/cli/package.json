@@ -1,0 +1,20 @@
+{
+  "name": "@time-buddy/cli",
+  "version": "0.2.0",
+  "description": "CLI for time-buddy",
+  "type": "module",
+  "bin": {
+    "tb": "./bin/tb.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node bin/tb.js"
+  },
+  "dependencies": {
+    "@time-buddy/core": "workspace:*",
+    "commander": "^12.1.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0"
+  }
+}
