@@ -7,6 +7,31 @@ program
   .name('tb')
   .description('Time buddy — date and time arithmetic')
   .version('0.2.0')
+  .addHelpText('after', `
+Examples:
+  Date arithmetic
+    tb 2026-06-01 - today          days until June 1
+    tb now + 30d                   date 30 days from now
+    tb 2026-05-21 - 2w             two weeks before a date
+    tb 2026-01-01 + 3 months       three months after a date
+
+  Duration arithmetic
+    tb 1h + 45m                    sum of durations
+    tb 2d * 3                      scale a duration
+    tb "(1h + 30m) * 2"            use quotes for expressions with parens
+
+  Number arithmetic
+    tb 2 ^ 10                      powers
+    tb "(32 - 0) / 1.8"            general math
+
+  Date formats accepted
+    2026-01-15   01-15-2026   15 Jan 2026   January 15, 2026
+
+  Duration units accepted
+    ms  s  m  h  d  w  mon  y  (and long forms: minutes, hours, days …)
+
+  Keywords
+    now   today   tomorrow`)
 
 // Default command: calc (expression passed as variadic args)
 program
