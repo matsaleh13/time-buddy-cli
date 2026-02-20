@@ -4,6 +4,7 @@
   "private": true,
   "description": "Monorepo root for time-buddy",
   "scripts": {
+    "prepare": "pnpm -r build",
     "build": "pnpm -r build",
     "test": "pnpm -r test",
     "lint": "pnpm -r lint"
