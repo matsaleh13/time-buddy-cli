@@ -1,14 +1,14 @@
-import type { Duration } from 'luxon'
+import type { DateTime, Duration } from 'luxon'
 import { parse, ParseError } from './grammar/parser.js'
 import { evaluate } from './eval/evaluator.js'
-import { EvalError } from './eval/types.js'
-import type { Value } from './eval/types.js'
+import { EvalError, PRECISION_RANK } from './eval/types.js'
+import type { Value, Precision } from './eval/types.js'
 import type { Node } from './grammar/ast.js'
 
 export { parse, ParseError } from './grammar/parser.js'
 export { evaluate } from './eval/evaluator.js'
 export { EvalError } from './eval/types.js'
-export type { Value } from './eval/types.js'
+export type { Value, Precision } from './eval/types.js'
 export type { Node, DurationUnit, CommandName } from './grammar/ast.js'
 
 export interface FormatOptions {
@@ -31,9 +31,11 @@ export function calc(input: string): Value {
 
 /**
  * Format a Value as a human-readable string.
+ * Datetime and duration results are automatically formatted at the precision
+ * implied by the inputs (e.g. `date + 30d` shows only the date; `1h + 30m` shows hours and minutes).
  */
 export function format(value: Value, opts: FormatOptions = {}): string {
-  const style = opts.durationStyle ?? 'auto'
+  const style  = opts.durationStyle ?? 'auto'
   const places = opts.decimalPlaces ?? 2
 
   switch (value.type) {
@@ -43,12 +45,26 @@ export function format(value: Value, opts: FormatOptions = {}): string {
         : value.value.toFixed(places)
 
     case 'datetime':
-      return value.value.toISO() ?? value.value.toString()
+      return formatDatetime(value.value, value.precision)
 
     case 'duration':
       return style === 'decimal'
         ? formatDurationDecimal(value.value, places)
-        : formatDurationUnits(value.value)
+        : formatDurationUnits(value.value, value.precision)
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Datetime formatting
+// ---------------------------------------------------------------------------
+
+function formatDatetime(dt: DateTime, precision: Precision): string {
+  switch (precision) {
+    case 'day':         return dt.toFormat('yyyy-MM-dd')
+    case 'hour':
+    case 'minute':      return dt.toFormat('yyyy-MM-dd HH:mm')
+    case 'second':      return dt.toFormat('yyyy-MM-dd HH:mm:ss')
+    case 'millisecond': return dt.toFormat('yyyy-MM-dd HH:mm:ss.SSS')
   }
 }
 
@@ -56,13 +72,29 @@ export function format(value: Value, opts: FormatOptions = {}): string {
 // Duration formatting helpers
 // ---------------------------------------------------------------------------
 
-function formatDurationUnits(dur: Duration): string {
-  // Normalize to a canonical set of units, dropping zeroes
+// Each duration unit's coarseness rank (0 = finest, 4 = coarsest).
+// years/months/weeks are "day-level" because sub-day units don't apply to them.
+const DUR_UNIT_RANK: Record<string, number> = {
+  milliseconds: 0,
+  seconds:      1,
+  minutes:      2,
+  hours:        3,
+  days:         4,
+  weeks:        4,
+  months:       4,
+  years:        4,
+}
+
+function formatDurationUnits(dur: Duration, precision: Precision): string {
+  const cutoff = PRECISION_RANK[precision]
   const shifted = dur.shiftTo('years', 'months', 'weeks', 'days', 'hours', 'minutes', 'seconds', 'milliseconds')
   const parts: string[] = []
 
-  const add = (v: number | undefined, unit: string, abbr: string) => {
-    if (v && Math.abs(v) >= 0.001) parts.push(`${round(v)}${abbr}`)
+  // Only include units that are at least as coarse as the precision cutoff.
+  const add = (v: number | undefined, durUnit: string, abbr: string) => {
+    if (DUR_UNIT_RANK[durUnit] >= cutoff && v && Math.abs(v) >= 0.001) {
+      parts.push(`${round(v)}${abbr}`)
+    }
   }
 
   add(shifted.years,        'years',        'y')
@@ -74,24 +106,30 @@ function formatDurationUnits(dur: Duration): string {
   add(shifted.seconds,      'seconds',      's')
   add(shifted.milliseconds, 'milliseconds', 'ms')
 
-  if (parts.length === 0) return '0s'
+  if (parts.length === 0) {
+    // Show a zero in the finest unit allowed at this precision
+    const zeroUnit: Record<Precision, string> = {
+      day: '0d', hour: '0h', minute: '0m', second: '0s', millisecond: '0ms',
+    }
+    return zeroUnit[precision]
+  }
 
   const negative = dur.valueOf() < 0
   return (negative ? '-' : '') + parts.join(' ')
 }
 
 function formatDurationDecimal(dur: Duration, places: number): string {
-  const ms = Math.abs(dur.toMillis())
+  const ms   = Math.abs(dur.toMillis())
   const sign = dur.toMillis() < 0 ? '-' : ''
   const units: [number, string][] = [
-    [365.25 * 24 * 3600 * 1000, 'years'],
-    [30.4375 * 24 * 3600 * 1000, 'months'],
-    [7 * 24 * 3600 * 1000, 'weeks'],
-    [24 * 3600 * 1000, 'days'],
-    [3600 * 1000, 'hours'],
-    [60 * 1000, 'minutes'],
-    [1000, 'seconds'],
-    [1, 'milliseconds'],
+    [365.25 * 24 * 3600 * 1000,    'years'],
+    [30.4375 * 24 * 3600 * 1000,   'months'],
+    [7 * 24 * 3600 * 1000,         'weeks'],
+    [24 * 3600 * 1000,             'days'],
+    [3600 * 1000,                  'hours'],
+    [60 * 1000,                    'minutes'],
+    [1000,                         'seconds'],
+    [1,                            'milliseconds'],
   ]
   for (const [divisor, label] of units) {
     if (ms >= divisor) {

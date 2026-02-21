@@ -1,7 +1,10 @@
 import { Duration } from 'luxon'
 import type { Value } from './types.js'
-import { EvalError } from './types.js'
+import { EvalError, precisionFiner } from './types.js'
 import type { BinOp } from '../grammar/ast.js'
+
+type DatetimeValue = Extract<Value, { type: 'datetime' }>
+type DurationValue = Extract<Value, { type: 'duration' }>
 
 export function applyBinOp(op: BinOp, left: Value, right: Value): Value {
   const pair = `${left.type} ${op} ${right.type}`
@@ -17,53 +20,56 @@ export function applyBinOp(op: BinOp, left: Value, right: Value): Value {
       return { type: 'number', value: (left.value as number) / divisor }
     }
 
-    // datetime ± duration — types guaranteed by the matched pair string
+    // datetime ± duration → datetime; precision comes from the duration
+    // (the duration's unit determines the meaningful step size of the result)
     case 'datetime + duration': {
-      const dt = (left as { type: 'datetime'; value: import('luxon').DateTime }).value
-      const dur = (right as { type: 'duration'; value: import('luxon').Duration }).value
-      return { type: 'datetime', value: dt.plus(dur) }
+      const l = left  as DatetimeValue
+      const r = right as DurationValue
+      return { type: 'datetime', value: l.value.plus(r.value), precision: r.precision }
     }
     case 'datetime - duration': {
-      const dt = (left as { type: 'datetime'; value: import('luxon').DateTime }).value
-      const dur = (right as { type: 'duration'; value: import('luxon').Duration }).value
-      return { type: 'datetime', value: dt.minus(dur) }
+      const l = left  as DatetimeValue
+      const r = right as DurationValue
+      return { type: 'datetime', value: l.value.minus(r.value), precision: r.precision }
     }
 
-    // datetime - datetime → duration (flat days, not calendar months, per design doc)
+    // datetime - datetime → duration; show the finer of the two input precisions
     case 'datetime - datetime': {
-      const l = (left as { type: 'datetime'; value: import('luxon').DateTime }).value
-      const r = (right as { type: 'datetime'; value: import('luxon').DateTime }).value
-      return { type: 'duration', value: l.diff(r, ['days', 'hours', 'minutes', 'seconds', 'milliseconds']) }
+      const l = left  as DatetimeValue
+      const r = right as DatetimeValue
+      return {
+        type: 'duration',
+        value: l.value.diff(r.value, ['days', 'hours', 'minutes', 'seconds', 'milliseconds']),
+        precision: precisionFiner(l.precision, r.precision),
+      }
     }
 
-    // duration arithmetic
+    // duration ± duration → finer precision (show all detail present in either operand)
     case 'duration + duration': {
-      const l = (left as { type: 'duration'; value: import('luxon').Duration }).value
-      const r = (right as { type: 'duration'; value: import('luxon').Duration }).value
-      return { type: 'duration', value: l.plus(r) }
+      const l = left  as DurationValue
+      const r = right as DurationValue
+      return { type: 'duration', value: l.value.plus(r.value),  precision: precisionFiner(l.precision, r.precision) }
     }
     case 'duration - duration': {
-      const l = (left as { type: 'duration'; value: import('luxon').Duration }).value
-      const r = (right as { type: 'duration'; value: import('luxon').Duration }).value
-      return { type: 'duration', value: l.minus(r) }
+      const l = left  as DurationValue
+      const r = right as DurationValue
+      return { type: 'duration', value: l.value.minus(r.value), precision: precisionFiner(l.precision, r.precision) }
     }
 
-    // duration * number or number * duration
+    // duration scaled by a number — precision stays with the duration
     case 'duration * number': {
-      const l = (left as { type: 'duration'; value: import('luxon').Duration }).value
-      return { type: 'duration', value: l.mapUnits(v => v * (right.value as number)) }
+      const l = left as DurationValue
+      return { type: 'duration', value: l.value.mapUnits(v => v * (right.value as number)), precision: l.precision }
     }
     case 'number * duration': {
-      const r = (right as { type: 'duration'; value: import('luxon').Duration }).value
-      return { type: 'duration', value: r.mapUnits(v => v * (left.value as number)) }
+      const r = right as DurationValue
+      return { type: 'duration', value: r.value.mapUnits(v => v * (left.value as number)),  precision: r.precision }
     }
-
-    // duration / number
     case 'duration / number': {
-      const l = (left as { type: 'duration'; value: import('luxon').Duration }).value
+      const l = left as DurationValue
       const d = right.value as number
       if (d === 0) throw new EvalError('Division by zero')
-      return { type: 'duration', value: l.mapUnits(v => v / d) }
+      return { type: 'duration', value: l.value.mapUnits(v => v / d), precision: l.precision }
     }
   }
 

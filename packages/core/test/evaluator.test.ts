@@ -158,3 +158,47 @@ describe('format', () => {
     expect(format(v)).toContain('2026-01-15')
   })
 })
+
+describe('format — precision inference', () => {
+  it('date + days → date only (no time component)', () => {
+    expect(format(calc('2026-01-01 + 30d'))).toBe('2026-01-31')
+  })
+  it('now + days → date only (day precision from the duration)', () => {
+    // `now` is ms-precise but `30d` is day-precise → result is day-level
+    const result = format(calc('now + 30d'))
+    expect(result).toMatch(/^\d{4}-\d{2}-\d{2}$/)
+  })
+  it('today → date only', () => {
+    const result = format(calc('today'))
+    expect(result).toMatch(/^\d{4}-\d{2}-\d{2}$/)
+  })
+  it('tomorrow → date only', () => {
+    const result = format(calc('tomorrow'))
+    expect(result).toMatch(/^\d{4}-\d{2}-\d{2}$/)
+  })
+  it('now → full timestamp with milliseconds', () => {
+    const result = format(calc('now'))
+    expect(result).toMatch(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}$/)
+  })
+  it('now + minutes → shows date and time to the minute', () => {
+    const result = format(calc('now + 30m'))
+    expect(result).toMatch(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/)
+  })
+  it('hours + minutes → shows both h and m', () => {
+    expect(format(calc('1h + 30m'))).toBe('1h 30m')
+  })
+  it('days * number → days only', () => {
+    expect(format(calc('2d * 3'))).toBe('6d')
+  })
+  it('date - date → day-level duration (no sub-day units)', () => {
+    // Both sides are day-precise → result contains only y/mo/w/d abbreviations
+    const result = format(calc('2026-02-01 - 2026-01-01'))
+    expect(result).toMatch(/^-?(?:\d+(?:y|mo|w|d)\s*)+$/)
+  })
+  it('now - today → sub-day duration (fine precision from now)', () => {
+    // `now` is ms-precise, `today` is day-precise → finer wins = ms
+    const result = format(calc('now - today'))
+    // Should include at minimum hours and minutes (elapsed since midnight)
+    expect(result).toMatch(/h/)
+  })
+})
