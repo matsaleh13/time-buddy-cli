@@ -40,7 +40,7 @@ export type Node =
   | { kind: 'Duration'; magnitude: number; unit: DurationUnit }
   | { kind: 'RawDate';  date: RawDate }
   | { kind: 'RawTime';  time: RawTime }
-  | { kind: 'RawDatetime'; date: RawDate; time: RawTime }
+  | { kind: 'RawDatetime'; date: RawDate; time: RawTime; tz?: number }
   | { kind: 'Keyword';  word: Keyword }
   | { kind: 'RelativeDate'; direction: RelativeDirection; unit: CalendarUnit }
   | { kind: 'RelativeWeekday'; direction: 'next' | 'last'; weekday: Weekday }

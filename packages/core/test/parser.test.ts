@@ -135,6 +135,40 @@ describe('parser — datetime combos', () => {
   })
 })
 
+describe('parser — timezone offsets', () => {
+  it('parses ISO datetime with Z (UTC)', () => {
+    const ast = parse('2026-01-15T14:30:00Z')
+    expect(ast).toMatchObject({ kind: 'RawDatetime', date: { year: 2026, month: 1, day: 15 }, time: { h: 14, m: 30 } })
+    expect((ast as any).tz).toBe(0)
+  })
+  it('parses ISO datetime with positive offset', () => {
+    const ast = parse('2026-01-15T14:30:00+05:30')
+    expect(ast).toMatchObject({ kind: 'RawDatetime' })
+    expect((ast as any).tz).toBe(330)  // 5*60 + 30
+  })
+  it('parses ISO datetime with negative offset', () => {
+    const ast = parse('2026-01-15T14:30:00-05:00')
+    expect(ast).toMatchObject({ kind: 'RawDatetime' })
+    expect((ast as any).tz).toBe(-300)  // -(5*60)
+  })
+  it('parses space-separated datetime with offset', () => {
+    const ast = parse('2026-01-15 09:00+00:00')
+    expect(ast).toMatchObject({ kind: 'RawDatetime' })
+    expect((ast as any).tz).toBe(0)
+  })
+  it('parses datetime with tz in expression', () => {
+    expect(parse('2026-01-15T14:30Z + 1d')).toMatchObject({
+      kind: 'BinOp', op: '+',
+      left:  { kind: 'RawDatetime' },
+      right: { kind: 'Duration', unit: 'days' },
+    })
+  })
+  it('datetime without tz has no tz field', () => {
+    const ast = parse('2026-01-15T14:30:00') as any
+    expect(ast.tz).toBeUndefined()
+  })
+})
+
 describe('parser — times (12-hour)', () => {
   it('parses H:MMpm (no space)', () => {
     expect(parse('3:30pm')).toEqual({ kind: 'RawTime', time: { h: 15, m: 30, s: 0, ms: 0 } })

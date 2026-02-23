@@ -1,4 +1,4 @@
-import { DateTime, Duration } from 'luxon'
+import { DateTime, Duration, FixedOffsetZone } from 'luxon'
 import type { Node, DurationUnit, Weekday } from '../grammar/ast.js'
 import type { Value, Precision } from './types.js'
 import { EvalError } from './types.js'
@@ -61,7 +61,8 @@ export function evaluate(node: Node): Value {
     case 'RawDatetime': {
       const { year, month, day } = node.date
       const { h, m, s, ms } = node.time
-      const dt = DateTime.local(year, month, day, h, m, s, ms)
+      const opts = node.tz !== undefined ? { zone: FixedOffsetZone.instance(node.tz) } : {}
+      const dt = DateTime.fromObject({ year, month, day, hour: h, minute: m, second: s, millisecond: ms }, opts)
       if (!dt.isValid) throw new EvalError(`Invalid datetime`)
       return { type: 'datetime', value: dt, precision: precisionFromTime(s, ms) }
     }

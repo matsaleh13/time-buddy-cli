@@ -109,10 +109,17 @@ TimeBuddy {
   // --- Datetime ---------------------------------------------------------------
 
   datetime (a date or time value)
-    = date "T" time  -- isoDatetime
-    | date " " time  -- dateAndTime
-    | date           -- dateOnly
-    | time           -- timeOnly
+    = date "T" time tzOffset  -- isoDatetimeTz
+    | date "T" time           -- isoDatetime
+    | date " " time tzOffset  -- dateAndTimeTz
+    | date " " time           -- dateAndTime
+    | date                    -- dateOnly
+    | time                    -- timeOnly
+
+  // Timezone offset: "Z" for UTC, or ±HH:MM numeric offset.
+  tzOffset (a timezone offset)
+    = caseInsensitive<"Z">                     -- utc
+    | ("+" | "-") twoDigits ":" twoDigits      -- numeric
 
   // Date formats, most-specific first.
   // dateSep can be - / or .

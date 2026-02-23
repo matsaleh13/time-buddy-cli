@@ -90,11 +90,27 @@ semantics.addOperation<Node>('toAST', {
   },
 
   // Datetime
+  datetime_isoDatetimeTz(date, _T, time, tz) {
+    return {
+      kind: 'RawDatetime',
+      date: extractDate(date.toAST()),
+      time: extractTime(time.toAST()),
+      tz: parseTzOffset(tz.sourceString),
+    }
+  },
   datetime_isoDatetime(date, _T, time) {
     return {
       kind: 'RawDatetime',
       date: extractDate(date.toAST()),
       time: extractTime(time.toAST()),
+    }
+  },
+  datetime_dateAndTimeTz(date, _sp, time, tz) {
+    return {
+      kind: 'RawDatetime',
+      date: extractDate(date.toAST()),
+      time: extractTime(time.toAST()),
+      tz: parseTzOffset(tz.sourceString),
     }
   },
   datetime_dateAndTime(date, _sp, time) {
@@ -229,6 +245,14 @@ function to24h(h: number, meridiem: string): number {
   if (pm && h !== 12) return h + 12
   if (!pm && h === 12) return 0
   return h
+}
+
+/** Parse a tzOffset sourceString (e.g. "Z", "+05:30", "-05:00") to offset minutes. */
+function parseTzOffset(s: string): number {
+  if (s.toLowerCase() === 'z') return 0
+  const sign = s[0] === '+' ? 1 : -1
+  const parts = s.slice(1).split(':')
+  return sign * (parseInt(parts[0], 10) * 60 + parseInt(parts[1] ?? '0', 10))
 }
 
 type DateNode   = { kind: 'RawDate';  date:  import('./ast.js').RawDate }

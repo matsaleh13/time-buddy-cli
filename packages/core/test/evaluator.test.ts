@@ -276,6 +276,72 @@ describe('evaluator — relative weekdays', () => {
   })
 })
 
+describe('evaluator — timezones', () => {
+  it('Z suffix stores UTC zone (offset 0)', () => {
+    const v = calc('2026-01-15T14:30:00Z')
+    expect(v.type).toBe('datetime')
+    if (v.type === 'datetime') {
+      expect(v.value.offset).toBe(0)
+      expect(v.value.zone.type).toBe('fixed')
+    }
+  })
+  it('+05:30 offset is stored correctly', () => {
+    const v = calc('2026-01-15T14:30:00+05:30')
+    expect(v.type).toBe('datetime')
+    if (v.type === 'datetime') {
+      expect(v.value.offset).toBe(330)
+    }
+  })
+  it('-05:00 offset is stored correctly', () => {
+    const v = calc('2026-01-15T09:30:00-05:00')
+    expect(v.type).toBe('datetime')
+    if (v.type === 'datetime') {
+      expect(v.value.offset).toBe(-300)
+    }
+  })
+  it('14:30+05:30 and 09:00Z are the same absolute time', () => {
+    const a = calc('2026-01-15T14:30:00+05:30')
+    const b = calc('2026-01-15T09:00:00Z')
+    if (a.type === 'datetime' && b.type === 'datetime') {
+      expect(a.value.toMillis()).toBe(b.value.toMillis())
+    }
+  })
+  it('arithmetic preserves the timezone zone', () => {
+    const v = calc('2026-01-15T14:30+05:30 + 5d')
+    expect(v.type).toBe('datetime')
+    if (v.type === 'datetime') {
+      expect(v.value.offset).toBe(330)
+      expect(v.value.toISODate()).toBe('2026-01-20')
+    }
+  })
+  it('diff of tz-aware datetimes is correct', () => {
+    const v = calc('2026-01-15T14:30Z - 2026-01-15T14:00Z')
+    expect(v.type).toBe('duration')
+    if (v.type === 'duration') {
+      expect(v.value.as('minutes')).toBe(30)
+    }
+  })
+  it('format shows Z for UTC', () => {
+    expect(format(calc('2026-01-15T14:30:00Z'))).toBe('2026-01-15 14:30Z')
+  })
+  it('format shows +HH:MM for positive offset', () => {
+    expect(format(calc('2026-01-15T14:30:00+05:30'))).toBe('2026-01-15 14:30+05:30')
+  })
+  it('format shows -HH:MM for negative offset', () => {
+    expect(format(calc('2026-01-15T09:30:00-05:00'))).toBe('2026-01-15 09:30-05:00')
+  })
+  it('format shows no suffix for local (no explicit tz) datetime', () => {
+    const result = format(calc('2026-01-15T14:30:00'))
+    // Should not end with a timezone suffix like "Z", "+05:30", "-05:00"
+    expect(result).not.toMatch(/(Z|[+-]\d\d:\d\d)$/)
+  })
+  it('format preserves tz after arithmetic', () => {
+    const result = format(calc('2026-01-15T14:30Z + 5d'))
+    expect(result).toMatch(/Z$/)
+    expect(result).toContain('2026-01-20')
+  })
+})
+
 describe('evaluator — type errors', () => {
   it('throws on datetime + datetime', () => {
     expect(() => calc('2026-01-01 + 2026-02-01')).toThrow()

@@ -59,13 +59,22 @@ export function format(value: Value, opts: FormatOptions = {}): string {
 // ---------------------------------------------------------------------------
 
 function formatDatetime(dt: DateTime, precision: Precision): string {
+  const tz = tzSuffix(dt)
   switch (precision) {
-    case 'day':         return dt.toFormat('yyyy-MM-dd')
+    case 'day':         return dt.toFormat('yyyy-MM-dd') + tz
     case 'hour':
-    case 'minute':      return dt.toFormat('yyyy-MM-dd HH:mm')
-    case 'second':      return dt.toFormat('yyyy-MM-dd HH:mm:ss')
-    case 'millisecond': return dt.toFormat('yyyy-MM-dd HH:mm:ss.SSS')
+    case 'minute':      return dt.toFormat('yyyy-MM-dd HH:mm') + tz
+    case 'second':      return dt.toFormat('yyyy-MM-dd HH:mm:ss') + tz
+    case 'millisecond': return dt.toFormat('yyyy-MM-dd HH:mm:ss.SSS') + tz
   }
+}
+
+/** Returns a timezone suffix for datetimes with an explicit fixed-offset zone.
+ *  System (local) and IANA zones get no suffix. */
+function tzSuffix(dt: DateTime): string {
+  if (dt.zone.type !== 'fixed') return ''
+  if (dt.offset === 0) return 'Z'
+  return dt.toFormat('ZZ')  // e.g. "+05:30"
 }
 
 // ---------------------------------------------------------------------------
