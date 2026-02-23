@@ -90,6 +90,47 @@ describe('evaluator — date arithmetic', () => {
   })
 })
 
+describe('evaluator — AM/PM times', () => {
+  it('3:30pm evaluates to 15:30', () => {
+    const v = calc('3:30pm')
+    expect(v.type).toBe('datetime')
+    if (v.type === 'datetime') {
+      expect(v.value.hour).toBe(15)
+      expect(v.value.minute).toBe(30)
+    }
+  })
+  it('12:00am evaluates to midnight (hour 0)', () => {
+    const v = calc('12:00am')
+    expect(v.type).toBe('datetime')
+    if (v.type === 'datetime') {
+      expect(v.value.hour).toBe(0)
+      expect(v.value.minute).toBe(0)
+    }
+  })
+  it('12:00pm evaluates to noon (hour 12)', () => {
+    const v = calc('12:00pm')
+    expect(v.type).toBe('datetime')
+    if (v.type === 'datetime') {
+      expect(v.value.hour).toBe(12)
+    }
+  })
+  it('11:59 PM evaluates to hour 23', () => {
+    const v = calc('11:59 PM')
+    expect(v.type).toBe('datetime')
+    if (v.type === 'datetime') {
+      expect(v.value.hour).toBe(23)
+      expect(v.value.minute).toBe(59)
+    }
+  })
+  it('12h time has minute precision', () => {
+    const v = calc('3:30pm')
+    expect(v.type).toBe('datetime')
+    if (v.type === 'datetime') {
+      expect(v.precision).toBe('minute')
+    }
+  })
+})
+
 describe('evaluator — keywords', () => {
   it('now returns a datetime close to the current time', () => {
     const before = DateTime.now()
@@ -124,6 +165,113 @@ describe('evaluator — keywords', () => {
     if (v.type === 'datetime') {
       expect(v.value.toMillis()).toBeGreaterThanOrEqual(before.toMillis() - 100)
       expect(v.value.toMillis()).toBeLessThanOrEqual(after.toMillis() + 100)
+    }
+  })
+})
+
+describe('evaluator — yesterday / relative dates', () => {
+  it('yesterday is one day before today', () => {
+    const yesterday = calc('yesterday')
+    const today = calc('today')
+    expect(yesterday.type).toBe('datetime')
+    if (yesterday.type === 'datetime' && today.type === 'datetime') {
+      expect(yesterday.value.plus({ days: 1 }).toISODate()).toBe(today.value.toISODate())
+      expect(yesterday.precision).toBe('day')
+    }
+  })
+  it('next week is a Monday in the future', () => {
+    const v = calc('next week')
+    expect(v.type).toBe('datetime')
+    if (v.type === 'datetime') {
+      expect(v.value.weekday).toBe(1)  // ISO Monday = 1
+      expect(v.value.toMillis()).toBeGreaterThan(DateTime.now().startOf('day').toMillis())
+      expect(v.precision).toBe('day')
+    }
+  })
+  it('last week is a Monday in the past', () => {
+    const v = calc('last week')
+    expect(v.type).toBe('datetime')
+    if (v.type === 'datetime') {
+      expect(v.value.weekday).toBe(1)
+      expect(v.value.toMillis()).toBeLessThan(DateTime.now().startOf('day').toMillis())
+    }
+  })
+  it('this month is the first day of the current month', () => {
+    const v = calc('this month')
+    expect(v.type).toBe('datetime')
+    if (v.type === 'datetime') {
+      expect(v.value.day).toBe(1)
+      expect(v.value.month).toBe(DateTime.now().month)
+    }
+  })
+  it('next month is the first day of next month', () => {
+    const v = calc('next month')
+    expect(v.type).toBe('datetime')
+    if (v.type === 'datetime') {
+      const expected = DateTime.now().startOf('month').plus({ months: 1 })
+      expect(v.value.toISODate()).toBe(expected.toISODate())
+    }
+  })
+  it('this year is Jan 1 of the current year', () => {
+    const v = calc('this year')
+    expect(v.type).toBe('datetime')
+    if (v.type === 'datetime') {
+      expect(v.value.month).toBe(1)
+      expect(v.value.day).toBe(1)
+      expect(v.value.year).toBe(DateTime.now().year)
+    }
+  })
+  it('next week + 2d is a Wednesday in the future', () => {
+    const v = calc('next week + 2d')
+    expect(v.type).toBe('datetime')
+    if (v.type === 'datetime') {
+      expect(v.value.weekday).toBe(3)  // Wednesday
+    }
+  })
+})
+
+describe('evaluator — relative weekdays', () => {
+  it('next monday is a Monday after today', () => {
+    const v = calc('next monday')
+    expect(v.type).toBe('datetime')
+    if (v.type === 'datetime') {
+      expect(v.value.weekday).toBe(1)
+      expect(v.value.toMillis()).toBeGreaterThan(DateTime.now().startOf('day').toMillis())
+      expect(v.precision).toBe('day')
+    }
+  })
+  it('last friday is a Friday before today', () => {
+    const v = calc('last friday')
+    expect(v.type).toBe('datetime')
+    if (v.type === 'datetime') {
+      expect(v.value.weekday).toBe(5)
+      expect(v.value.toMillis()).toBeLessThan(DateTime.now().startOf('day').toMillis())
+    }
+  })
+  it('next sunday is a Sunday in the future', () => {
+    const v = calc('next sunday')
+    expect(v.type).toBe('datetime')
+    if (v.type === 'datetime') {
+      expect(v.value.weekday).toBe(7)
+      expect(v.value.toMillis()).toBeGreaterThan(DateTime.now().startOf('day').toMillis())
+    }
+  })
+  it('next weekday is never more than 7 days away', () => {
+    const v = calc('next wednesday')
+    expect(v.type).toBe('datetime')
+    if (v.type === 'datetime') {
+      const diff = v.value.diff(DateTime.now().startOf('day'), 'days').days
+      expect(diff).toBeGreaterThan(0)
+      expect(diff).toBeLessThanOrEqual(7)
+    }
+  })
+  it('last weekday is never more than 7 days ago', () => {
+    const v = calc('last thursday')
+    expect(v.type).toBe('datetime')
+    if (v.type === 'datetime') {
+      const diff = DateTime.now().startOf('day').diff(v.value, 'days').days
+      expect(diff).toBeGreaterThan(0)
+      expect(diff).toBeLessThanOrEqual(7)
     }
   })
 })

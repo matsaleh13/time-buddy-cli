@@ -135,6 +135,37 @@ describe('parser — datetime combos', () => {
   })
 })
 
+describe('parser — times (12-hour)', () => {
+  it('parses H:MMpm (no space)', () => {
+    expect(parse('3:30pm')).toEqual({ kind: 'RawTime', time: { h: 15, m: 30, s: 0, ms: 0 } })
+  })
+  it('parses H:MM AM (with space)', () => {
+    expect(parse('10:00 AM')).toEqual({ kind: 'RawTime', time: { h: 10, m: 0, s: 0, ms: 0 } })
+  })
+  it('converts 12:00am to midnight (hour 0)', () => {
+    expect(parse('12:00am')).toMatchObject({ kind: 'RawTime', time: { h: 0, m: 0 } })
+  })
+  it('converts 12:30pm to noon + 30m (hour 12)', () => {
+    expect(parse('12:30pm')).toMatchObject({ kind: 'RawTime', time: { h: 12, m: 30 } })
+  })
+  it('converts 1:00pm to hour 13', () => {
+    expect(parse('1:00pm')).toMatchObject({ kind: 'RawTime', time: { h: 13, m: 0 } })
+  })
+  it('converts 11:59PM to hour 23', () => {
+    expect(parse('11:59PM')).toMatchObject({ kind: 'RawTime', time: { h: 23, m: 59 } })
+  })
+  it('parses H:MM:SSpm (with seconds)', () => {
+    expect(parse('2:30:45pm')).toMatchObject({ kind: 'RawTime', time: { h: 14, m: 30, s: 45 } })
+  })
+  it('parses date with 12h time', () => {
+    expect(parse('2026-01-15 3:30pm')).toMatchObject({
+      kind: 'RawDatetime',
+      date: { year: 2026, month: 1, day: 15 },
+      time: { h: 15, m: 30 },
+    })
+  })
+})
+
 describe('parser — keywords', () => {
   it('parses now', () => {
     expect(parse('now')).toEqual({ kind: 'Keyword', word: 'now' })
@@ -144,6 +175,55 @@ describe('parser — keywords', () => {
   })
   it('parses tomorrow', () => {
     expect(parse('tomorrow')).toEqual({ kind: 'Keyword', word: 'tomorrow' })
+  })
+  it('parses yesterday', () => {
+    expect(parse('yesterday')).toEqual({ kind: 'Keyword', word: 'yesterday' })
+  })
+})
+
+describe('parser — relative dates', () => {
+  it('parses next week', () => {
+    expect(parse('next week')).toEqual({ kind: 'RelativeDate', direction: 'next', unit: 'week' })
+  })
+  it('parses last month', () => {
+    expect(parse('last month')).toEqual({ kind: 'RelativeDate', direction: 'last', unit: 'month' })
+  })
+  it('parses this year', () => {
+    expect(parse('this year')).toEqual({ kind: 'RelativeDate', direction: 'this', unit: 'year' })
+  })
+  it('parses next day', () => {
+    expect(parse('next day')).toEqual({ kind: 'RelativeDate', direction: 'next', unit: 'day' })
+  })
+  it('parses last week (case-insensitive)', () => {
+    expect(parse('Last Week')).toEqual({ kind: 'RelativeDate', direction: 'last', unit: 'week' })
+  })
+  it('parses this month', () => {
+    expect(parse('this month')).toEqual({ kind: 'RelativeDate', direction: 'this', unit: 'month' })
+  })
+})
+
+describe('parser — relative weekdays', () => {
+  it('parses next monday', () => {
+    expect(parse('next monday')).toEqual({ kind: 'RelativeWeekday', direction: 'next', weekday: 'monday' })
+  })
+  it('parses last friday', () => {
+    expect(parse('last friday')).toEqual({ kind: 'RelativeWeekday', direction: 'last', weekday: 'friday' })
+  })
+  it('parses next wed (abbreviation)', () => {
+    expect(parse('next wed')).toEqual({ kind: 'RelativeWeekday', direction: 'next', weekday: 'wednesday' })
+  })
+  it('parses last sat', () => {
+    expect(parse('last sat')).toEqual({ kind: 'RelativeWeekday', direction: 'last', weekday: 'saturday' })
+  })
+  it('parses next sun', () => {
+    expect(parse('next sun')).toEqual({ kind: 'RelativeWeekday', direction: 'next', weekday: 'sunday' })
+  })
+  it('parses next week + 2d (relative date in expression)', () => {
+    expect(parse('next week + 2d')).toMatchObject({
+      kind: 'BinOp', op: '+',
+      left:  { kind: 'RelativeDate', direction: 'next', unit: 'week' },
+      right: { kind: 'Duration', unit: 'days' },
+    })
   })
 })
 

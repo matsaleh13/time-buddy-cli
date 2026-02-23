@@ -46,9 +46,30 @@ TimeBuddy {
   // ---------------------------------------------------------------------------
 
   keyword (a keyword)
-    = caseInsensitive<"tomorrow">
-    | caseInsensitive<"today">
-    | caseInsensitive<"now">
+    = caseInsensitive<"next"> " " relativeUnit  -- nextUnit
+    | caseInsensitive<"last"> " " relativeUnit  -- lastUnit
+    | caseInsensitive<"this"> " " relativeUnit  -- thisUnit
+    | caseInsensitive<"next"> " " weekday       -- nextWeekday
+    | caseInsensitive<"last"> " " weekday       -- lastWeekday
+    | caseInsensitive<"yesterday">              -- yesterday
+    | caseInsensitive<"tomorrow">               -- tomorrow
+    | caseInsensitive<"today">                  -- today
+    | caseInsensitive<"now">                    -- now
+
+  relativeUnit (a relative calendar unit)
+    = caseInsensitive<"year">
+    | caseInsensitive<"month">
+    | caseInsensitive<"week">
+    | caseInsensitive<"day">
+
+  weekday (a day of the week)
+    = caseInsensitive<"monday">    | caseInsensitive<"mon">
+    | caseInsensitive<"tuesday">   | caseInsensitive<"tues"> | caseInsensitive<"tue">
+    | caseInsensitive<"wednesday"> | caseInsensitive<"wed">
+    | caseInsensitive<"thursday">  | caseInsensitive<"thurs"> | caseInsensitive<"thur"> | caseInsensitive<"thu">
+    | caseInsensitive<"friday">    | caseInsensitive<"fri">
+    | caseInsensitive<"saturday">  | caseInsensitive<"sat">
+    | caseInsensitive<"sunday">    | caseInsensitive<"sun">
 
 
   // --- Duration ---------------------------------------------------------------
@@ -110,10 +131,17 @@ TimeBuddy {
   twoDigits  = digit digit
   oneOrTwoDigits = digit digit?
 
+  // 12-hour time alternatives are tried first (they require a meridiem suffix).
+  // 24-hour alternatives are tried last, as a fallback.
   time (a time value)
-    = twoDigits ":" twoDigits ":" twoDigits "." threeDigits  -- hmsf
-    | twoDigits ":" twoDigits ":" twoDigits                  -- hms
-    | twoDigits ":" twoDigits                                -- hm
+    = oneOrTwoDigits ":" twoDigits ":" twoDigits "." threeDigits " "? meridiem  -- hmsf12
+    | oneOrTwoDigits ":" twoDigits ":" twoDigits " "? meridiem                  -- hms12
+    | oneOrTwoDigits ":" twoDigits " "? meridiem                                -- hm12
+    | twoDigits ":" twoDigits ":" twoDigits "." threeDigits                     -- hmsf
+    | twoDigits ":" twoDigits ":" twoDigits                                     -- hms
+    | twoDigits ":" twoDigits                                                   -- hm
+
+  meridiem (am or pm) = caseInsensitive<"am"> | caseInsensitive<"pm">
 
   threeDigits = digit digit digit
 

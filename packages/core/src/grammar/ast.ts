@@ -12,7 +12,15 @@ export type CommandName = 'calc' | 'list' | 'count' | 'set'
 
 export type BinOp = '+' | '-' | '*' | '/'
 
-export type Keyword = 'now' | 'today' | 'tomorrow'
+export type Keyword = 'now' | 'today' | 'tomorrow' | 'yesterday'
+
+export type RelativeDirection = 'next' | 'last' | 'this'
+
+export type CalendarUnit = 'day' | 'week' | 'month' | 'year'
+
+export type Weekday =
+  | 'monday' | 'tuesday' | 'wednesday' | 'thursday'
+  | 'friday' | 'saturday' | 'sunday'
 
 export interface RawTime {
   h: number
@@ -34,6 +42,8 @@ export type Node =
   | { kind: 'RawTime';  time: RawTime }
   | { kind: 'RawDatetime'; date: RawDate; time: RawTime }
   | { kind: 'Keyword';  word: Keyword }
+  | { kind: 'RelativeDate'; direction: RelativeDirection; unit: CalendarUnit }
+  | { kind: 'RelativeWeekday'; direction: 'next' | 'last'; weekday: Weekday }
   | { kind: 'BinOp';    op: BinOp; left: Node; right: Node }
   | { kind: 'Exp';      base: Node; exponent: Node }
   | { kind: 'Command';  name: CommandName; expr: Node }
