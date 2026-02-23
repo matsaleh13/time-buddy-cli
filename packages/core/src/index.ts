@@ -3,7 +3,7 @@ import { parse, ParseError } from './grammar/parser.js'
 import { evaluate } from './eval/evaluator.js'
 import { EvalError, PRECISION_RANK } from './eval/types.js'
 import type { Value, Precision } from './eval/types.js'
-import type { Node } from './grammar/ast.js'
+import type { Node, DurationUnit } from './grammar/ast.js'
 
 export { parse, ParseError } from './grammar/parser.js'
 export { evaluate } from './eval/evaluator.js'
@@ -15,9 +15,12 @@ export interface FormatOptions {
   // How to display a duration result.
   // 'auto'    → picks the most natural representation (default)
   // 'units'   → "3d 2h 15m"
-  // 'decimal' → "3.094 days"
+  // 'decimal' → "3.09 days" (picks the largest fitting unit)
   durationStyle?: 'auto' | 'units' | 'decimal'
-  // Precision for decimal durations
+  // Express the duration in a specific unit: "1.50 hours", "99.00 days"
+  // Takes precedence over durationStyle when set.
+  durationUnit?: DurationUnit
+  // Decimal places for numeric/decimal-duration output (default: 2)
   decimalPlaces?: number
 }
 
@@ -48,9 +51,34 @@ export function format(value: Value, opts: FormatOptions = {}): string {
       return formatDatetime(value.value, value.precision)
 
     case 'duration':
+      if (opts.durationUnit) return formatDurationInUnit(value.value, opts.durationUnit, places)
       return style === 'decimal'
         ? formatDurationDecimal(value.value, places)
         : formatDurationUnits(value.value, value.precision)
+  }
+}
+
+/**
+ * Return a plain JSON-serialisable object representing a Value.
+ * Suitable for piping to other tools via `tb --json`.
+ */
+export function toJSON(value: Value, opts: FormatOptions = {}): object {
+  switch (value.type) {
+    case 'number':
+      return { type: 'number', value: value.value }
+    case 'datetime':
+      return {
+        type: 'datetime',
+        value: format(value, opts),
+        iso: value.value.toISO(),
+        unix: Math.floor(value.value.toMillis() / 1000),
+      }
+    case 'duration':
+      return {
+        type: 'duration',
+        value: format(value, opts),
+        milliseconds: value.value.toMillis(),
+      }
   }
 }
 
@@ -125,6 +153,23 @@ function formatDurationUnits(dur: Duration, precision: Precision): string {
 
   const negative = dur.valueOf() < 0
   return (negative ? '-' : '') + parts.join(' ')
+}
+
+/** Convert a duration to a specific unit and display as a decimal. */
+function formatDurationInUnit(dur: Duration, unit: DurationUnit, places: number): string {
+  const MS_PER: Record<DurationUnit, number> = {
+    milliseconds: 1,
+    seconds:      1_000,
+    minutes:      60 * 1_000,
+    hours:        3_600 * 1_000,
+    days:         86_400 * 1_000,
+    weeks:        7 * 86_400 * 1_000,
+    months:       30.4375 * 86_400 * 1_000,
+    years:        365.25 * 86_400 * 1_000,
+  }
+  const sign = dur.toMillis() < 0 ? '-' : ''
+  const result = Math.abs(dur.toMillis()) / MS_PER[unit]
+  return `${sign}${result.toFixed(places)} ${unit}`
 }
 
 function formatDurationDecimal(dur: Duration, places: number): string {

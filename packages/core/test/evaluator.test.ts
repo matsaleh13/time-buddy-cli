@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { calc, format } from '../src/index.js'
+import { calc, format, toJSON } from '../src/index.js'
 import { DateTime } from 'luxon'
 
 describe('evaluator — number arithmetic', () => {
@@ -370,6 +370,50 @@ describe('format', () => {
   it('formats a datetime as ISO', () => {
     const v = calc('2026-01-15')
     expect(format(v)).toContain('2026-01-15')
+  })
+})
+
+describe('format — durationUnit option', () => {
+  it('expresses 1h 30m in minutes', () => {
+    expect(format(calc('1h + 30m'), { durationUnit: 'minutes' })).toBe('90.00 minutes')
+  })
+  it('expresses 1h 30m in hours', () => {
+    expect(format(calc('1h + 30m'), { durationUnit: 'hours' })).toBe('1.50 hours')
+  })
+  it('expresses 2d in hours', () => {
+    expect(format(calc('2d'), { durationUnit: 'hours' })).toBe('48.00 hours')
+  })
+  it('respects decimalPlaces', () => {
+    expect(format(calc('1h + 30m'), { durationUnit: 'hours', decimalPlaces: 1 })).toBe('1.5 hours')
+  })
+  it('handles negative duration', () => {
+    const v = calc('30m - 1h')
+    expect(format(v, { durationUnit: 'minutes' })).toBe('-30.00 minutes')
+  })
+})
+
+describe('toJSON', () => {
+  it('serialises a number', () => {
+    const obj = toJSON(calc('42')) as any
+    expect(obj.type).toBe('number')
+    expect(obj.value).toBe(42)
+  })
+  it('serialises a duration', () => {
+    const obj = toJSON(calc('1h + 30m')) as any
+    expect(obj.type).toBe('duration')
+    expect(obj.milliseconds).toBe(5400000)
+    expect(typeof obj.value).toBe('string')
+  })
+  it('serialises a datetime', () => {
+    const obj = toJSON(calc('2026-01-15T14:30Z')) as any
+    expect(obj.type).toBe('datetime')
+    expect(obj.iso).toContain('2026-01-15')
+    expect(typeof obj.unix).toBe('number')
+  })
+  it('duration value field reflects formatOpts', () => {
+    const obj = toJSON(calc('1h + 30m'), { durationUnit: 'hours' }) as any
+    expect(obj.value).toBe('1.50 hours')
+    expect(obj.milliseconds).toBe(5400000)
   })
 })
 
