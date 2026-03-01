@@ -2,7 +2,7 @@ import * as ohm from 'ohm-js'
 import { readFileSync } from 'fs'
 import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
-import type { Node, DurationUnit, CalendarUnit, RelativeDirection, Weekday } from './ast.js'
+import type { Node, DurationUnit, CalendarUnit, RelativeDirection, Weekday, ListInterval, DayFilter } from './ast.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const grammarSource = readFileSync(join(__dirname, 'tb.ohm'), 'utf-8')
@@ -16,11 +16,45 @@ semantics.addOperation<Node>('toAST', {
   // Syntactic rules — no explicit space params (auto-skipped by Ohm)
   // ---------------------------------------------------------------------------
 
+  Expression_withCommandList(command, listExpr) {
+    const name = command.sourceString.toLowerCase() as 'calc' | 'list' | 'count' | 'set'
+    return { kind: 'Command', name, expr: listExpr.toAST() }
+  },
   Expression_withCommand(command, expr) {
     const name = command.sourceString.toLowerCase() as 'calc' | 'list' | 'count' | 'set'
     return { kind: 'Command', name, expr: expr.toAST() }
   },
+  Expression_bareList(listExpr) { return listExpr.toAST() },
   Expression(e) { return e.toAST() },
+
+  // ListExpr
+  ListExpr_every(_every, interval, _from, fromExpr, _to, toExpr) {
+    const src = interval.sourceString.trim()
+    let listInterval: ListInterval
+    if (/^\d/.test(src)) {
+      // Starts with a digit → it's a duration (e.g. "2 weeks", "7d")
+      // interval.toAST() delegates via _nonterminal → duration.toAST() → Duration node
+      const d = interval.toAST() as { kind: 'Duration'; magnitude: number; unit: DurationUnit }
+      listInterval = { kind: 'duration', magnitude: d.magnitude, unit: d.unit }
+    } else {
+      // Starts with a letter → it's a weekday name (e.g. "monday", "fri")
+      listInterval = { kind: 'weekday', weekday: normalizeWeekday(src) }
+    }
+    return { kind: 'ListExpr', interval: listInterval, from: fromExpr.toAST(), to: toExpr.toAST() }
+  },
+  ListExpr_filtered(filter, _from, fromExpr, _to, toExpr) {
+    // sourceString is "weekdays" or "weekends" (case-insensitive match)
+    const f = filter.sourceString.toLowerCase() as DayFilter
+    return { kind: 'ListExpr', interval: { kind: 'filter', filter: f }, from: fromExpr.toAST(), to: toExpr.toAST() }
+  },
+
+  // listInterval — named alternatives (toAST used for _duration case; _weekday is a placeholder)
+  listInterval_duration(dur) { return dur.toAST() },
+  listInterval_weekday(_wd)  { return { kind: 'Number', value: 0 } as Node },
+
+  // dayFilter — named alternatives (both placeholders; ctorName used in ListExpr_filtered)
+  dayFilter_weekdays(_) { return { kind: 'Number', value: 0 } as Node },
+  dayFilter_weekends(_) { return { kind: 'Number', value: 0 } as Node },
 
   Expr_add(left, _op, right) {
     return { kind: 'BinOp', op: '+', left: left.toAST(), right: right.toAST() }

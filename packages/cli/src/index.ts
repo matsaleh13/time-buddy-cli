@@ -31,6 +31,12 @@ Examples:
     tb 2 ^ 10                      powers
     tb "(32 - 0) / 1.8"            general math
 
+  List and count
+    tb list every monday from 2026-01-01 to 2026-03-31   all Mondays in Q1
+    tb list weekdays from 2026-03-01 to 2026-03-31       all weekdays in March
+    tb count weekdays from 2026-03-01 to 2026-03-31      how many weekdays
+    tb count every 2w from today to next year             every 2-week mark
+
   Output formatting
     tb 2026-06-01 - today --decimal          decimal days
     tb 1h + 45m --in minutes                 express in minutes
@@ -77,22 +83,18 @@ const calcCmd = addFormatOptions(
     .description('evaluate a time/date expression (default)')
 ).action((words: string[]) => runCalc(words.join(' '), calcCmd.opts()))
 
-// Stubs for future commands
-program
-  .command('list <expression...>')
-  .description('list time points matching an expression (not yet implemented)')
-  .action(() => {
-    console.error('tb list: not yet implemented')
-    process.exit(1)
-  })
+// list and count subcommands
+const listCmd = addFormatOptions(
+  program
+    .command('list <expression...>')
+    .description('list time points matching a "every … from … to …" or "weekdays/weekends from … to …" expression')
+).action((words: string[]) => runCalc('list ' + words.join(' '), listCmd.opts()))
 
-program
-  .command('count <expression...>')
-  .description('count occurrences in an expression (not yet implemented)')
-  .action(() => {
-    console.error('tb count: not yet implemented')
-    process.exit(1)
-  })
+const countCmd = addFormatOptions(
+  program
+    .command('count <expression...>')
+    .description('count time points matching a list expression')
+).action((words: string[]) => runCalc('count ' + words.join(' '), countCmd.opts()))
 
 program
   .command('set <key> <value>')

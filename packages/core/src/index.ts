@@ -8,7 +8,7 @@ import type { Node, DurationUnit } from './grammar/ast.js'
 export { parse, ParseError } from './grammar/parser.js'
 export { evaluate } from './eval/evaluator.js'
 export { EvalError } from './eval/types.js'
-export type { Value, Precision } from './eval/types.js'
+export type { Value, Precision, DatetimeValue } from './eval/types.js'
 export type { Node, DurationUnit, CommandName } from './grammar/ast.js'
 
 export interface FormatOptions {
@@ -55,6 +55,10 @@ export function format(value: Value, opts: FormatOptions = {}): string {
       return style === 'decimal'
         ? formatDurationDecimal(value.value, places)
         : formatDurationUnits(value.value, value.precision)
+
+    case 'list':
+      if (value.items.length === 0) return '(no results)'
+      return value.items.map(item => format(item, opts)).join('\n')
   }
 }
 
@@ -78,6 +82,12 @@ export function toJSON(value: Value, opts: FormatOptions = {}): object {
         type: 'duration',
         value: format(value, opts),
         milliseconds: value.value.toMillis(),
+      }
+    case 'list':
+      return {
+        type: 'list',
+        count: value.items.length,
+        items: value.items.map(item => format(item, opts)),
       }
   }
 }

@@ -22,6 +22,13 @@ export type Weekday =
   | 'monday' | 'tuesday' | 'wednesday' | 'thursday'
   | 'friday' | 'saturday' | 'sunday'
 
+export type DayFilter = 'weekdays' | 'weekends'
+
+export type ListInterval =
+  | { kind: 'duration'; magnitude: number; unit: DurationUnit }
+  | { kind: 'weekday'; weekday: Weekday }
+  | { kind: 'filter'; filter: DayFilter }
+
 export interface RawTime {
   h: number
   m: number
@@ -47,3 +54,4 @@ export type Node =
   | { kind: 'BinOp';    op: BinOp; left: Node; right: Node }
   | { kind: 'Exp';      base: Node; exponent: Node }
   | { kind: 'Command';  name: CommandName; expr: Node }
+  | { kind: 'ListExpr'; interval: ListInterval; from: Node; to: Node }

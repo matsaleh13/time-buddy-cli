@@ -6,7 +6,9 @@ TimeBuddy {
   // ---------------------------------------------------------------------------
 
   Expression
-    = Command Expr  -- withCommand
+    = Command ListExpr  -- withCommandList
+    | Command Expr      -- withCommand
+    | ListExpr          -- bareList
     | Expr
 
   Command (a command keyword)
@@ -14,6 +16,10 @@ TimeBuddy {
     | caseInsensitive<"list">
     | caseInsensitive<"count">
     | caseInsensitive<"set">
+
+  ListExpr (a list expression)
+    = caseInsensitive<"every"> listInterval caseInsensitive<"from"> Expr caseInsensitive<"to"> Expr  -- every
+    | dayFilter caseInsensitive<"from"> Expr caseInsensitive<"to"> Expr  -- filtered
 
   // PEMDAS — each level delegates to the next tighter binding.
   Expr
@@ -71,6 +77,14 @@ TimeBuddy {
     | caseInsensitive<"saturday">  | caseInsensitive<"sat">
     | caseInsensitive<"sunday">    | caseInsensitive<"sun">
 
+  listInterval (a list interval)
+    = duration  -- duration
+    | weekday   -- weekday
+
+  dayFilter (a day filter)
+    = caseInsensitive<"weekdays">  -- weekdays
+    | caseInsensitive<"weekends">  -- weekends
+
 
   // --- Duration ---------------------------------------------------------------
 
@@ -89,7 +103,7 @@ TimeBuddy {
     | caseInsensitive<"s">
     | caseInsensitive<"minutes"> | caseInsensitive<"minute">
     | caseInsensitive<"mins">    | caseInsensitive<"min">
-    | caseInsensitive<"m">
+    | caseInsensitive<"m"> ~letter
     | caseInsensitive<"hours"> | caseInsensitive<"hour">
     | caseInsensitive<"hrs">   | caseInsensitive<"hr">
     | caseInsensitive<"h">

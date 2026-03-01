@@ -1,6 +1,6 @@
 import { DateTime, Duration, FixedOffsetZone } from 'luxon'
-import type { Node, DurationUnit, Weekday } from '../grammar/ast.js'
-import type { Value, Precision } from './types.js'
+import type { Node, DurationUnit, Weekday, ListInterval } from '../grammar/ast.js'
+import type { Value, Precision, DatetimeValue } from './types.js'
 import { EvalError } from './types.js'
 import { applyBinOp, applyExp } from './operations.js'
 
@@ -139,7 +139,66 @@ export function evaluate(node: Node): Value {
       return applyExp(base, exp)
     }
 
-    case 'Command':
-      return evaluate(node.expr)
+    case 'Command': {
+      const result = evaluate(node.expr)
+      if (node.name === 'count' && result.type === 'list') {
+        return { type: 'number', value: result.items.length }
+      }
+      return result
+    }
+
+    case 'ListExpr': {
+      const fromVal = evaluate(node.from)
+      const toVal   = evaluate(node.to)
+      if (fromVal.type !== 'datetime') throw new EvalError('list "from" must be a date/datetime')
+      if (toVal.type   !== 'datetime') throw new EvalError('list "to" must be a date/datetime')
+      return { type: 'list', items: generateList(node.interval, fromVal, toVal) }
+    }
   }
+}
+
+// ---------------------------------------------------------------------------
+// List generation helpers
+// ---------------------------------------------------------------------------
+
+function generateList(interval: ListInterval, from: DatetimeValue, to: DatetimeValue): DatetimeValue[] {
+  const start = from.value.startOf('day')
+  const end   = to.value.startOf('day')
+  const items: DatetimeValue[] = []
+
+  switch (interval.kind) {
+    case 'duration': {
+      const step = Duration.fromObject({ [interval.unit]: interval.magnitude })
+      let cur = start
+      while (cur.toMillis() <= end.toMillis()) {
+        items.push({ type: 'datetime', value: cur, precision: 'day' })
+        cur = cur.plus(step)
+      }
+      break
+    }
+
+    case 'weekday': {
+      const target = weekdayToISO(interval.weekday)
+      const diff = (target - start.weekday + 7) % 7
+      let cur = start.plus({ days: diff })
+      while (cur.toMillis() <= end.toMillis()) {
+        items.push({ type: 'datetime', value: cur, precision: 'day' })
+        cur = cur.plus({ weeks: 1 })
+      }
+      break
+    }
+
+    case 'filter': {
+      let cur = start
+      while (cur.toMillis() <= end.toMillis()) {
+        const dow = cur.weekday  // Luxon: 1=Mon … 7=Sun
+        const keep = interval.filter === 'weekdays' ? dow <= 5 : dow >= 6
+        if (keep) items.push({ type: 'datetime', value: cur, precision: 'day' })
+        cur = cur.plus({ days: 1 })
+      }
+      break
+    }
+  }
+
+  return items
 }

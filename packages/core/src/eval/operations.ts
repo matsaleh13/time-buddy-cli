@@ -3,6 +3,7 @@ import type { Value } from './types.js'
 import { EvalError, precisionFiner } from './types.js'
 import type { BinOp } from '../grammar/ast.js'
 
+type NumberValue   = Extract<Value, { type: 'number' }>
 type DatetimeValue = Extract<Value, { type: 'datetime' }>
 type DurationValue = Extract<Value, { type: 'duration' }>
 
@@ -11,13 +12,13 @@ export function applyBinOp(op: BinOp, left: Value, right: Value): Value {
 
   switch (pair) {
     // number arithmetic
-    case 'number + number': return { type: 'number', value: (left.value as number) + (right.value as number) }
-    case 'number - number': return { type: 'number', value: (left.value as number) - (right.value as number) }
-    case 'number * number': return { type: 'number', value: (left.value as number) * (right.value as number) }
+    case 'number + number': { const l = left as NumberValue; const r = right as NumberValue; return { type: 'number', value: l.value + r.value } }
+    case 'number - number': { const l = left as NumberValue; const r = right as NumberValue; return { type: 'number', value: l.value - r.value } }
+    case 'number * number': { const l = left as NumberValue; const r = right as NumberValue; return { type: 'number', value: l.value * r.value } }
     case 'number / number': {
-      const divisor = right.value as number
-      if (divisor === 0) throw new EvalError('Division by zero')
-      return { type: 'number', value: (left.value as number) / divisor }
+      const l = left as NumberValue; const r = right as NumberValue
+      if (r.value === 0) throw new EvalError('Division by zero')
+      return { type: 'number', value: l.value / r.value }
     }
 
     // datetime ± duration → datetime; precision comes from the duration
@@ -58,18 +59,17 @@ export function applyBinOp(op: BinOp, left: Value, right: Value): Value {
 
     // duration scaled by a number — precision stays with the duration
     case 'duration * number': {
-      const l = left as DurationValue
-      return { type: 'duration', value: l.value.mapUnits(v => v * (right.value as number)), precision: l.precision }
+      const l = left as DurationValue; const r = right as NumberValue
+      return { type: 'duration', value: l.value.mapUnits(v => v * r.value), precision: l.precision }
     }
     case 'number * duration': {
-      const r = right as DurationValue
-      return { type: 'duration', value: r.value.mapUnits(v => v * (left.value as number)),  precision: r.precision }
+      const l = left as NumberValue; const r = right as DurationValue
+      return { type: 'duration', value: r.value.mapUnits(v => v * l.value), precision: r.precision }
     }
     case 'duration / number': {
-      const l = left as DurationValue
-      const d = right.value as number
-      if (d === 0) throw new EvalError('Division by zero')
-      return { type: 'duration', value: l.value.mapUnits(v => v / d), precision: l.precision }
+      const l = left as DurationValue; const r = right as NumberValue
+      if (r.value === 0) throw new EvalError('Division by zero')
+      return { type: 'duration', value: l.value.mapUnits(v => v / r.value), precision: l.precision }
     }
   }
 
@@ -82,5 +82,5 @@ export function applyExp(base: Value, exp: Value): Value {
   if (base.type !== 'number' || exp.type !== 'number') {
     throw new EvalError(`Exponentiation only works on numbers, got ${base.type} ^ ${exp.type}`)
   }
-  return { type: 'number', value: Math.pow(base.value, exp.value) }
+  return { type: 'number', value: Math.pow((base as NumberValue).value, (exp as NumberValue).value) }
 }
