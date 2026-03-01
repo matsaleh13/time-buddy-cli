@@ -1,8 +1,17 @@
 {
   "name": "@time-buddy/core",
   "version": "0.2.0",
-  "description": "Core parser and evaluator for time-buddy expressions",
+  "description": "Core parser and evaluator for time-buddy date/time expressions",
   "type": "module",
+  "license": "MIT",
+  "author": "matsaleh13",
+  "homepage": "https://github.com/matsaleh13/time-buddy-cli#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/matsaleh13/time-buddy-cli.git"
+  },
+  "keywords": ["time", "date", "datetime", "duration", "arithmetic", "parser"],
+  "files": ["dist"],
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -15,6 +24,9 @@
     "build": "tsc && node -e \"require('fs').cpSync('src/grammar/tb.ohm','dist/grammar/tb.ohm')\"",
     "test": "vitest run",
     "test:watch": "vitest"
+  },
+  "engines": {
+    "node": ">=18"
   },
   "dependencies": {
     "luxon": "^3.4.0",

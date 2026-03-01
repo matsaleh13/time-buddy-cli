@@ -1,14 +1,26 @@
 {
-  "name": "@time-buddy/cli",
+  "name": "time-buddy",
   "version": "0.2.0",
-  "description": "CLI for time-buddy",
+  "description": "Date and time arithmetic on the command line",
   "type": "module",
+  "license": "MIT",
+  "author": "matsaleh13",
+  "homepage": "https://github.com/matsaleh13/time-buddy-cli#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/matsaleh13/time-buddy-cli.git"
+  },
+  "keywords": ["time", "date", "datetime", "duration", "arithmetic", "calculator", "cli"],
+  "files": ["bin", "dist"],
   "bin": {
     "tb": "./bin/tb.js"
   },
   "scripts": {
     "build": "tsc",
     "start": "node bin/tb.js"
+  },
+  "engines": {
+    "node": ">=18"
   },
   "dependencies": {
     "@time-buddy/core": "workspace:*",
