@@ -4,7 +4,7 @@
   "description": "Date and time arithmetic on the command line",
   "type": "module",
   "license": "MIT",
-  "author": "matsaleh13",
+  "author": "Matthew C. Walker",
   "homepage": "https://github.com/matsaleh13/time-buddy-cli#readme",
   "repository": {
     "type": "git",

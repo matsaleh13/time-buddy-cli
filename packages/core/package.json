@@ -4,7 +4,7 @@
   "description": "Core parser and evaluator for time-buddy date/time expressions",
   "type": "module",
   "license": "MIT",
-  "author": "matsaleh13",
+  "author": "Matthew C. Walker",
   "homepage": "https://github.com/matsaleh13/time-buddy-cli#readme",
   "repository": {
     "type": "git",
